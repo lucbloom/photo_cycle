@@ -193,12 +193,14 @@ private:
 	ImageFileNameLibrary m_Library;
 
 	float m_FadeDuration = 1;
-	float m_FadeTimer;
+	float m_FadeTimer = 0;
 
 	float m_DisplayDuration = 5;
-	float m_DisplayTimer;
+	float m_DisplayTimer = 0;
 
 	bool m_RenderText = true;
+
+	bool m_IsPreview = false;
 
 	Direct2DApp(const Direct2DApp&) = delete;
 	Direct2DApp& operator=(const Direct2DApp&) = delete;
@@ -211,7 +213,7 @@ public:
 	}
 
 	// Register the window class and create the window
-	HRESULT Initialize(HINSTANCE hInstance) {
+	HRESULT Initialize(HINSTANCE hInstance, const std::wstring& cmd) {
 		auto include = ReadList(L"Images", L"Include");
 		auto exclude = ReadList(L"Images", L"Exclude");
 		if (include.empty())
@@ -229,34 +231,44 @@ public:
 			return hr;
 		}
 
-		// Register window class
-		WNDCLASSEX wcex = { sizeof(WNDCLASSEX) };
-		wcex.style = CS_HREDRAW | CS_VREDRAW;
-		wcex.lpfnWndProc = Direct2DApp::WndProc;
-		wcex.cbClsExtra = 0;
-		wcex.cbWndExtra = sizeof(LONG_PTR);
-		wcex.hInstance = hInstance;
-		wcex.hIcon = LoadIcon(nullptr, IDI_APPLICATION);
-		wcex.hCursor = LoadCursor(nullptr, IDC_ARROW);
-		wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
-		wcex.lpszMenuName = nullptr;
-		wcex.lpszClassName = L"Direct2DAppClass";
-		wcex.hIconSm = LoadIcon(wcex.hInstance, IDI_APPLICATION);
+		size_t pPos = cmd.find(L"/p");
+		if (pPos == std::string::npos) { pPos = cmd.find(L"/P"); }
+		m_IsPreview = (pPos != std::string::npos);
+		if (m_IsPreview) {
+			auto hwndStr = cmd.c_str() + pPos + 3;  // Skip over "/p "
+			m_hwnd = reinterpret_cast<HWND>(_wtoi64(hwndStr)); ;
+		}
+		else
+		{
+			// Register window class
+			WNDCLASSEX wcex = { sizeof(WNDCLASSEX) };
+			wcex.style = CS_HREDRAW | CS_VREDRAW;
+			wcex.lpfnWndProc = Direct2DApp::WndProc;
+			wcex.cbClsExtra = 0;
+			wcex.cbWndExtra = sizeof(LONG_PTR);
+			wcex.hInstance = hInstance;
+			wcex.hIcon = LoadIcon(nullptr, IDI_APPLICATION);
+			wcex.hCursor = LoadCursor(nullptr, IDC_ARROW);
+			wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
+			wcex.lpszMenuName = nullptr;
+			wcex.lpszClassName = L"Direct2DAppClass";
+			wcex.hIconSm = LoadIcon(wcex.hInstance, IDI_APPLICATION);
 
-		RegisterClassEx(&wcex);
+			RegisterClassEx(&wcex);
 
-		// Create the window
-		m_hwnd = CreateWindow(
-			L"Direct2DAppClass",
-			L"Direct2D Texture Renderer",
-			WS_OVERLAPPEDWINDOW,
-			CW_USEDEFAULT, CW_USEDEFAULT,
-			800, 600,
-			nullptr,
-			nullptr,
-			hInstance,
-			this
-		);
+			// Create the window
+			m_hwnd = CreateWindow(
+				L"Direct2DAppClass",
+				L"Direct2D Texture Renderer",
+				WS_OVERLAPPEDWINDOW,
+				CW_USEDEFAULT, CW_USEDEFAULT,
+				800, 600,
+				nullptr,
+				nullptr,
+				hInstance,
+				this
+			);
+		}
 
 		if (!m_hwnd) {
 			return E_FAIL;
@@ -478,13 +490,13 @@ public:
 		GetClientRect(m_hwnd, &screenRect); // Or use GetSystemMetrics(SM_CXSCREEN) and SM_CYSCREEN for full screen size
 
 		// Get bitmap dimensions
-		UINT imgWidth = sprite->bitmap->GetSize().width;
-		UINT imgHeight = sprite->bitmap->GetSize().height;
+		float imgWidth = sprite->bitmap->GetSize().width;
+		float imgHeight = sprite->bitmap->GetSize().height;
 
 		// Calculate the scaling factor based on the screen dimensions
 		float scaleFactor = std::max(
-			static_cast<float>(screenRect.right - screenRect.left) / imgWidth,
-			static_cast<float>(screenRect.bottom - screenRect.top) / imgHeight
+			(screenRect.right - screenRect.left) / imgWidth,
+			(screenRect.bottom - screenRect.top) / imgHeight
 		);
 
 		// Calculate new scaled width and height
@@ -854,7 +866,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 		{
 			Direct2DApp app;
 
-			if (SUCCEEDED(app.Initialize(hInstance))) {
+			if (SUCCEEDED(app.Initialize(hInstance, lpCmdLine))) {
 				app.RunMessageLoop();
 			}
 		}
