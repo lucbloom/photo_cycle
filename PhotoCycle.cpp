@@ -320,6 +320,7 @@ HRESULT App::Initialize(HINSTANCE hInstance, const std::wstring& cmd) {
 		auto hwndStr = cmd.c_str() + pPos + 3;  // Skip over "/p "
 		m_Screensavers.resize(1);
 		m_Screensavers[0].m_hwnd = reinterpret_cast<HWND>(_wtoi64(hwndStr));
+		m_Screensavers[0].GetMaximizedRect();
 	}
 	else
 	{
@@ -408,6 +409,8 @@ HRESULT App::Initialize(HINSTANCE hInstance, const std::wstring& cmd) {
 		// Show the window
 		ShowWindow(screen.m_hwnd, SW_SHOWNORMAL);
 		UpdateWindow(screen.m_hwnd);
+
+		screen.StartSwap(false, 1);
 	}
 
 	return S_OK;
@@ -777,6 +780,10 @@ void ScreenSaverWindow::OnResize(UINT width, UINT height)
 
 void App::SetFullscreen(bool fullscreen)
 {
+	if (m_IsPreview) {
+		return;
+	}
+
 	for (int i = 0; i < m_Screensavers.size(); ++i) {
 		auto& screen = m_Screensavers[i];
 		if (fullscreen) {
@@ -876,7 +883,6 @@ LRESULT CALLBACK App::WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
 	}
 
 	App* pApp = reinterpret_cast<App*>(GetWindowLongPtr(hwnd, GWLP_USERDATA));
-
 	if (!pApp) {
 		return DefWindowProc(hwnd, message, wParam, lParam);
 	}
