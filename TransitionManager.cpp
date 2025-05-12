@@ -6,13 +6,24 @@
 #include <wincodec.h>
 #include <d3dcompiler.h>
 
+#pragma comment(lib, "Ws2_32.lib")
+#pragma comment(lib, "d3d11.lib")
+#pragma comment(lib, "d3dcompiler.lib")
+
 ID3D11Device* g_pDevice = nullptr;
 ID3D11DeviceContext* g_pContext = nullptr;
 IDXGISwapChain* g_pSwapChain = nullptr;
 ID3D11RenderTargetView* g_pRenderTargetView = nullptr;
+ID3D11SamplerState* g_SamplerState = nullptr;
 
 ID3D11VertexShader* g_pVertexShader = nullptr;
 ID3D11PixelShader* g_pPixelShader = nullptr;
+
+//struct Vertex
+//{
+//	DirectX::XMFLOAT3 position; // Position in 3D space (XYZ)
+//	DirectX::XMFLOAT2 texCoord; // Texture coordinates (UV)
+//};
 
 HRESULT InitD3D(HWND hWnd) {
 	DXGI_SWAP_CHAIN_DESC scd = {};
@@ -66,22 +77,8 @@ HRESULT LoadTextureFromFile(const wchar_t* fileName, ID3D11ShaderResourceView** 
 	hr = pConverter->Initialize(pFrame, GUID_WICPixelFormat32bppPBGRA, WICBitmapDitherTypeNone, nullptr, 0.0f, WICBitmapPaletteTypeCustom);
 	if (FAILED(hr)) return hr;
 
-	// Create a texture from the WIC bitmap
-	ID3D11Texture2D* pTexture = nullptr;
-
-	UINT width, height;
-	pConverter->GetSize(&width, &height);
-	UINT stride = width * 4;
-	UINT imageSize = stride * height;
-	std::vector<BYTE> pixels(imageSize);
-
-	D3D11_SUBRESOURCE_DATA initData = {};
-	initData.pSysMem = pixels.data();
-	initData.SysMemPitch = stride;
-
 	D3D11_TEXTURE2D_DESC desc = {};
-	desc.Width = width;
-	desc.Height = height;
+	pConverter->GetSize(&desc.Width, &desc.Height);
 	desc.MipLevels = 1;
 	desc.ArraySize = 1;
 	desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
@@ -89,6 +86,18 @@ HRESULT LoadTextureFromFile(const wchar_t* fileName, ID3D11ShaderResourceView** 
 	desc.Usage = D3D11_USAGE_DEFAULT;
 	desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
 
+	UINT stride = desc.Width * 4;
+	UINT imageSize = stride * desc.Height;
+	std::vector<BYTE> pixels(imageSize);
+	hr = pConverter->CopyPixels(nullptr, stride, imageSize, pixels.data());
+	if (FAILED(hr)) return hr;
+
+	D3D11_SUBRESOURCE_DATA initData = {};
+	initData.pSysMem = pixels.data();
+	initData.SysMemPitch = stride;
+
+	// Create a texture from the WIC bitmap
+	ID3D11Texture2D* pTexture = nullptr;
 	hr = g_pDevice->CreateTexture2D(&desc, &initData, &pTexture);
 	if (FAILED(hr)) return hr;
 
@@ -161,21 +170,56 @@ TransitionManager::TransitionManager()
 }
 
 void TransitionManager::Init(HWND hWnd) {
-	HRESULT hr = InitD3D(hWnd);
-	if (FAILED(hr)) {
-		MessageBoxLastError();
-		return;
-	}
-	hr = LoadVertexShader();
-	if (FAILED(hr)) {
-		MessageBoxLastError();
-		return;
-	}
-	hr = LoadPixelShader();
-	if (FAILED(hr)) {
-		MessageBoxLastError();
-		return;
-	}
+//	HRESULT hr = InitD3D(hWnd);
+//	if (FAILED(hr)) {
+//		MessageBoxLastError();
+//		return;
+//	}
+//	hr = LoadVertexShader();
+//	if (FAILED(hr)) {
+//		MessageBoxLastError();
+//		return;
+//	}
+//	hr = LoadPixelShader();
+//	if (FAILED(hr)) {
+//		MessageBoxLastError();
+//		return;
+//	}
+//
+//	D3D11_INPUT_ELEMENT_DESC layout[] =
+//	{
+//		// Position
+//		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+//		// Texture coordinates (UV)
+//		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 }
+//	};
+//
+//	UINT numElements = ARRAYSIZE(layout);
+//	ID3D11InputLayout* pInputLayout = nullptr;
+//	hr = g_pDevice->CreateInputLayout(layout, numElements,
+//		pCompiledShaderBlob->GetBufferPointer(),
+//		pCompiledShaderBlob->GetBufferSize(),
+//		&pInputLayout);
+//
+//
+//	UINT stride = sizeof(Vertex);
+//	UINT offset = 0;
+//	g_pContext->IASetVertexBuffers(0, 1, &pVertexBuffer, &stride, &offset);
+//	g_pContext->IASetInputLayout(nullptr);
+//	g_pContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+//	g_pContext->PSSetSamplers(0, 1, &g_SamplerState);
+//
+//	D3D11_VIEWPORT vp = {};
+//	vp.Width = (FLOAT)width;
+//	vp.Height = (FLOAT)height;
+//	vp.MinDepth = 0.0f;
+//	vp.MaxDepth = 1.0f;
+//	vp.TopLeftX = 0;
+//	vp.TopLeftY = 0;
+//
+//	g_pContext->RSSetViewports(1, &vp);
+//
+//	g_pContext->OMSetRenderTargets(1, &pRenderTargetView, nullptr);
 }
 
 void TransitionManager::StartTransition(const ImageInfo* newImagePath) {
