@@ -3,14 +3,14 @@
 
 #include "framework.h"
 #include "PhotoCycle.h"
-#include <string>
 #include "TransitionManager.h"
-#include "ImageManager.h"
+#include "ImageFileNameLibrary.h"
 
-#pragma comment(lib, "gdiplus.lib")
+//#pragma comment(lib, "gdiplus.lib")
+#pragma comment(lib, "d3d11.lib")
+#pragma comment(lib, "D3DCompiler.lib")
+
 #pragma comment(lib, "Ws2_32.lib")
-
-using namespace Gdiplus;
 
 #define MAX_LOADSTRING 100
 #define VK_LALT 0x8000
@@ -21,13 +21,16 @@ HWND g_MainWindow = NULL;
 WCHAR g_WindowTitle[MAX_LOADSTRING]; // The title bar text
 WCHAR g_WindowClass[MAX_LOADSTRING]; // the main window class name
 const DWORD g_WindowStyle = CS_HREDRAW | CS_VREDRAW;
-ULONG_PTR g_GDIPlusToken = NULL;
+
 UINT_PTR g_TimerId = 1;
 const UINT g_Interval = 5000; // 5 seconds
 bool g_IsPreview = false;
 
+//using namespace Gdiplus;
+//ULONG_PTR g_GDIPlusToken = NULL;
+
 TransitionManager g_Renderer;
-ImageManager g_ImageLoader; // Change this to your image directory
+ImageFileNameLibrary g_ImageLoader; // Change this to your image directory
 
 // Forward declarations of functions included in this code module:
 ATOM MyRegisterClass(HINSTANCE hInstance);
@@ -111,8 +114,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 
 	g_ImageLoader.SetPaths({ L"C:\\Users\\lucbl\\Pictures\\Personal" }, { });
 
-	GdiplusStartupInput gdiplusStartupInput;
-	GdiplusStartup(&g_GDIPlusToken, &gdiplusStartupInput, NULL);
+	//GdiplusStartupInput gdiplusStartupInput;
+	//GdiplusStartup(&g_GDIPlusToken, &gdiplusStartupInput, NULL);
 
 	size_t pPos = cmd.find(L"/p");
 	if (pPos == std::string::npos) { pPos = cmd.find(L"/P"); }
@@ -165,6 +168,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 		UpdateWindow(g_MainWindow);
 	}
 
+	g_Renderer.Init(g_MainWindow);
+
 	const DWORD targetFrameTime = 1000 / 60;  // 60 FPS
 	DWORD lastTime = GetTickCount();
 
@@ -188,7 +193,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 		DWORD frameTime = currentTime - lastTime;
 
 		if (frameTime >= targetFrameTime) {
-			g_Renderer.Update(g_MainWindow);  // Frame-based update
+			g_Renderer.Update(g_MainWindow);
+			g_Renderer.Draw(g_MainWindow);
 			lastTime = currentTime;
 		}
 		else
@@ -210,7 +216,7 @@ void Show(HWND hwnd, int offset, bool immediately) {
 	{
 		g_Renderer.StartTransition(currentImage);
 	}
-	InvalidateRect(hwnd, NULL, TRUE);
+	//InvalidateRect(hwnd, NULL, TRUE);
 }
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -225,7 +231,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_TIMER:
 		if (wParam == g_TimerId) {
 			Show(hWnd, 1, false);
-			InvalidateRect(hWnd, nullptr, TRUE);
+			//InvalidateRect(hWnd, nullptr, TRUE);
 		}
 		break;
 
@@ -247,21 +253,21 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			Show(hWnd, -1, true);
 			// Reset the timer to the start to avoid delay
 			SetTimer(hWnd, g_TimerId, g_Interval, nullptr);
-			InvalidateRect(hWnd, nullptr, TRUE);
+			//InvalidateRect(hWnd, nullptr, TRUE);
 			break;
 
 		case VK_RIGHT:  // Right arrow key
 			Show(hWnd, 1, true);
 			// Reset the timer to the start to avoid delay
 			SetTimer(hWnd, g_TimerId, g_Interval, nullptr);
-			InvalidateRect(hWnd, nullptr, TRUE);
+			//InvalidateRect(hWnd, nullptr, TRUE);
 			break;
 		}
 		break;
 
-	case WM_MOUSEMOVE:
-		InvalidateRect(hWnd, nullptr, TRUE);
-		break;
+	//case WM_MOUSEMOVE:
+	//	InvalidateRect(hWnd, nullptr, TRUE);
+	//	break;
 
 		//case WM_SYSKEYDOWN:
 		//	switch (wParam) {
@@ -287,9 +293,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		//	break;
 		//}
 
-	case WM_PAINT:
-		g_Renderer.Draw(hWnd);
-		break;
+	//case WM_PAINT:
+	//	g_Renderer.Draw(hWnd);
+	//	break;
 
 	case WM_DESTROY:
 		KillTimer(hWnd, g_TimerId);

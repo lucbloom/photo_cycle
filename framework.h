@@ -16,8 +16,8 @@
 #include <malloc.h>
 #include <memory.h>
 #include <tchar.h>
-#include <gdiplus.h>
-#include <gdiplusimageattributes.h>
+//#include <gdiplus.h>
+//#include <gdiplusimageattributes.h>
 #include <string>
 #include <list>
 #include <filesystem>
@@ -32,6 +32,7 @@
 
 std::string WStringToUtf8(const std::wstring& wstr);
 std::wstring Utf8ToWString(const std::string & str);
+void MessageBoxLastError();
 
 struct ImageInfo {
 	std::wstring dateTaken;

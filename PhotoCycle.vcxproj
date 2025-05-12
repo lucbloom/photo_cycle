@@ -227,7 +227,7 @@
     <ClInclude Include="exiv2\src\tzfile.h" />
     <ClInclude Include="exiv2\src\utils.hpp" />
     <ClInclude Include="framework.h" />
-    <ClInclude Include="ImageManager.h" />
+    <ClInclude Include="ImageFileNameLibrary.h" />
     <ClInclude Include="PhotoCycle.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="TransitionManager.h" />
@@ -311,7 +311,7 @@
     <ClCompile Include="exiv2\src\webpimage.cpp" />
     <ClCompile Include="exiv2\src\xmp.cpp" />
     <ClCompile Include="exiv2\src\xmpsidecar.cpp" />
-    <ClCompile Include="ImageManager.cpp" />
+    <ClCompile Include="ImageFileNameLibrary.cpp" />
     <ClCompile Include="PhotoCycle.cpp" />
     <ClCompile Include="TransitionManager.cpp" />
     <ClCompile Include="zlib\adler32.c" />

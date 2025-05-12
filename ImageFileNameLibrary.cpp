@@ -1,10 +1,10 @@
 
-#include "ImageManager.h"
+#include "ImageFileNameLibrary.h"
 
 #define WIN32_LEAN_AND_MEAN
 #include <exiv2.hpp>
 
-void ImageManager::SetPaths(const std::vector<std::wstring>& include, const std::vector<std::wstring>& exclude)
+void ImageFileNameLibrary::SetPaths(const std::vector<std::wstring>& include, const std::vector<std::wstring>& exclude)
 {
 	for (const auto& dir : include) {
 		LoadImages(dir, exclude);
@@ -107,7 +107,7 @@ std::wstring GetFileCreationDate(const std::wstring& filePath) {
 	}
 }
 
-void ImageManager::LoadImages(const std::wstring& directory, const std::vector<std::wstring>& exclude) {
+void ImageFileNameLibrary::LoadImages(const std::wstring& directory, const std::vector<std::wstring>& exclude) {
 	for (const auto& entry : std::filesystem::directory_iterator(directory)) {
 		std::wstring path = entry.path().wstring();
 
@@ -155,14 +155,14 @@ void ImageManager::LoadImages(const std::wstring& directory, const std::vector<s
 	}
 }
 
-void ImageManager::ShuffleImages() {
+void ImageFileNameLibrary::ShuffleImages() {
 	std::random_device rd;
 	std::mt19937 g(rd());
 	std::shuffle(m_ImageList.begin(), m_ImageList.end(), g);
 	m_CurrentImageIdx = 0;
 }
 
-const ImageInfo* ImageManager::GotoImage(int offset) {
+const ImageInfo* ImageFileNameLibrary::GotoImage(int offset) {
 	if (m_ImageList.empty())
 	{
 		return NULL;

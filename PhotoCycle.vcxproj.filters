@@ -4,7 +4,7 @@
     <ClInclude Include="framework.h" />
     <ClInclude Include="PhotoCycle.h" />
     <ClInclude Include="Resource.h" />
-    <ClInclude Include="ImageManager.h" />
+    <ClInclude Include="ImageFileNameLibrary.h" />
     <ClInclude Include="TransitionManager.h" />
     <ClInclude Include="exiv2\src\canonmn_int.hpp">
       <Filter>exiv2\src</Filter>
@@ -283,7 +283,7 @@
   <ItemGroup>
     <ClCompile Include="PhotoCycle.cpp" />
     <ClCompile Include="TransitionManager.cpp" />
-    <ClCompile Include="ImageManager.cpp" />
+    <ClCompile Include="ImageFileNameLibrary.cpp" />
     <ClCompile Include="exiv2\src\asfvideo.cpp">
       <Filter>exiv2\src</Filter>
     </ClCompile>

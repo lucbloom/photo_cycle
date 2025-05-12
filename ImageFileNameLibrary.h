@@ -2,7 +2,7 @@
 
 #include "framework.h"
 
-class ImageManager {
+class ImageFileNameLibrary {
 public:
 	void SetPaths(const std::vector<std::wstring>& include, const std::vector<std::wstring>& exclude);
 	const ImageInfo* GotoImage(int offset);
