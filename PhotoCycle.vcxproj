@@ -228,9 +228,7 @@
     <ClInclude Include="exiv2\src\utils.hpp" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="ImageFileNameLibrary.h" />
-    <ClInclude Include="PhotoCycle.h" />
     <ClInclude Include="Resource.h" />
-    <ClInclude Include="TransitionManager.h" />
     <ClInclude Include="zlib\crc32.h" />
     <ClInclude Include="zlib\deflate.h" />
     <ClInclude Include="zlib\gzguts.h" />
@@ -313,7 +311,6 @@
     <ClCompile Include="exiv2\src\xmpsidecar.cpp" />
     <ClCompile Include="ImageFileNameLibrary.cpp" />
     <ClCompile Include="PhotoCycle.cpp" />
-    <ClCompile Include="TransitionManager.cpp" />
     <ClCompile Include="zlib\adler32.c" />
     <ClCompile Include="zlib\compress.c" />
     <ClCompile Include="zlib\crc32.c" />

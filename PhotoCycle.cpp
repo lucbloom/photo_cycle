@@ -2,23 +2,21 @@
 #define UNICODE
 #endif
 
-#include <windows.h>
+#include <sstream>
 #include <d2d1.h>
-#include <d2d1helper.h>
 #include <dwrite.h>
 #include <wincodec.h>
 #include <wrl/client.h>
-#include <memory>
-#include <string>
-#include <stdexcept>
-#include <algorithm>
-#include <ImageFileNameLibrary.h>
 #include <shlobj.h>
 
-// Link the Direct2D library
+#include "ImageFileNameLibrary.h"
+
 #pragma comment(lib, "d2d1.lib")
 #pragma comment(lib, "dwrite.lib")
-#pragma comment(lib, "windowscodecs.lib")
+#pragma comment(lib, "Ws2_32.lib")
+
+std::string WStringToUtf8(const std::wstring& wstr);
+std::wstring Utf8ToWString(const std::string& str);
 
 // Custom stream buffer that redirects output to OutputDebugString
 class OutputDebugStreamBuf : public std::streambuf {
@@ -141,6 +139,18 @@ void WriteList(LPCWSTR section, LPCWSTR key, const std::vector<std::wstring>& li
 	WritePrivateProfileString(section, key, joined.c_str(), file.c_str());
 }
 
+int ReadInt(LPCWSTR section, LPCWSTR key, int defaultValue) {
+	auto file = EnsureIniFileExists(false);
+	return GetPrivateProfileInt(section, key, defaultValue, file.c_str());
+}
+
+UINT32 ReadColor(LPCWSTR section, LPCWSTR key, UINT32 defaultValue) {
+	auto file = EnsureIniFileExists(false);
+	WCHAR buffer[64];
+	GetPrivateProfileString(section, key, nullptr, buffer, 64, file.c_str());
+	return buffer[0] ? wcstoul(buffer, nullptr, 16) : defaultValue;
+}
+
 float ReadFloat(LPCWSTR section, LPCWSTR key, float defaultValue) {
 	auto file = EnsureIniFileExists(false);
 	WCHAR buffer[64];
@@ -151,6 +161,13 @@ float ReadFloat(LPCWSTR section, LPCWSTR key, float defaultValue) {
 bool ReadBool(LPCWSTR section, LPCWSTR key, bool defaultValue) {
 	auto file = EnsureIniFileExists(false);
 	return GetPrivateProfileInt(section, key, defaultValue ? 1 : 0, file.c_str()) != 0;
+}
+
+std::wstring ReadString(LPCWSTR section, LPCWSTR key, LPCWSTR defaultValue) {
+	auto file = EnsureIniFileExists(false);
+	WCHAR buffer[2048] = {};
+	GetPrivateProfileString(section, key, defaultValue, buffer, 2048, file.c_str());
+	return buffer;
 }
 
 std::vector<std::wstring> SplitList(const std::wstring& str, wchar_t delimiter = L',') {
@@ -166,14 +183,13 @@ std::vector<std::wstring> SplitList(const std::wstring& str, wchar_t delimiter =
 }
 
 std::vector<std::wstring> ReadList(LPCWSTR section, LPCWSTR key) {
-	auto file = EnsureIniFileExists(false);
-	WCHAR buffer[2048] = {};
-	GetPrivateProfileString(section, key, nullptr, buffer, 2048, file.c_str());
-	return SplitList(buffer);
+	return SplitList(ReadString(section, key, nullptr));
 }
 
 static const wchar_t* INI_SETTINGS = L"Settings";
 static const wchar_t* INI_RENDER_TEXT = L"RenderText";
+
+#define FULLSCREEN_STYLE WS_POPUP
 
 class Direct2DApp
 {
@@ -192,13 +208,16 @@ private:
 	ComPtr<ID2D1SolidColorBrush> m_pTextBrush;
 	ImageFileNameLibrary m_Library;
 
-	float m_FadeDuration = 1;
+	float m_FadeDuration = 0.3f;
 	float m_FadeTimer = 0;
 
-	float m_DisplayDuration = 5;
+	float m_DisplayDuration = 10;
 	float m_DisplayTimer = 0;
 
 	bool m_RenderText = true;
+	std::wstring m_TextFontName = L"Segoe UI";
+	UINT32 m_TextColor = 0xffffff;
+	UINT32 m_BackgroundColor = 0x00000000;
 
 	bool m_IsPreview = false;
 
@@ -222,9 +241,12 @@ public:
 		}
 		m_Library.SetPaths(include, exclude);
 
-		m_FadeDuration = ReadFloat(INI_SETTINGS, L"FadeDuration", 1.0f);
-		m_DisplayDuration = ReadFloat(INI_SETTINGS, L"DisplayDuration", 10.0f);
-		m_RenderText = ReadBool(INI_SETTINGS, INI_RENDER_TEXT, true);
+		m_FadeDuration = ReadFloat(INI_SETTINGS, L"FadeDuration", m_FadeDuration);
+		m_DisplayDuration = ReadFloat(INI_SETTINGS, L"DisplayDuration", m_DisplayDuration);
+		m_RenderText = ReadBool(INI_SETTINGS, INI_RENDER_TEXT, m_RenderText);
+		m_TextFontName = ReadString(INI_SETTINGS, L"Font", m_TextFontName.c_str());
+		m_TextColor = ReadColor(INI_SETTINGS, L"FontColor", m_TextColor);
+		m_BackgroundColor = ReadColor(INI_SETTINGS, L"BackgroundColor", m_BackgroundColor);
 
 		HRESULT hr = CreateDeviceIndependentResources();
 		if (FAILED(hr)) {
@@ -240,6 +262,36 @@ public:
 		}
 		else
 		{
+			//DISPLAY_DEVICE dd;
+			//dd.cb = sizeof(dd);
+			//int i = 0;
+			//
+			//while (EnumDisplayDevices(NULL, i, &dd, 0)) {
+			//	DEVMODE dm;
+			//	dm.dmSize = sizeof(dm);
+			//
+			//	if (EnumDisplaySettings(dd.DeviceName, ENUM_CURRENT_SETTINGS, &dm)) {
+			//		WNDCLASS wc = { 0 };
+			//		wc.lpfnWndProc = WndProc;
+			//		wc.hInstance = hInstance;
+			//		wc.lpszClassName = L"ScreenSaverClass";
+			//		RegisterClass(&wc);
+			//
+			//		m_hwnd = CreateWindowEx(
+			//			WS_EX_TOPMOST,
+			//			L"ScreenSaverClass",
+			//			L"ScreenSaver",
+			//			WS_POPUP,
+			//			dm.dmPosition.x, dm.dmPosition.y, dm.dmPelsWidth, dm.dmPelsHeight,
+			//			nullptr, nullptr, hInstance, this
+			//		);
+			//
+			//		ShowWindow(m_hwnd, SW_SHOW);
+			//	}
+			//
+			//	i++;
+			//}
+
 			// Register window class
 			WNDCLASSEX wcex = { sizeof(WNDCLASSEX) };
 			wcex.style = CS_HREDRAW | CS_VREDRAW;
@@ -253,16 +305,17 @@ public:
 			wcex.lpszMenuName = nullptr;
 			wcex.lpszClassName = L"Direct2DAppClass";
 			wcex.hIconSm = LoadIcon(wcex.hInstance, IDI_APPLICATION);
-
+			
 			RegisterClassEx(&wcex);
-
+			
 			// Create the window
+			RECT pos = GetMaximizedRect();
 			m_hwnd = CreateWindow(
 				L"Direct2DAppClass",
 				L"Direct2D Texture Renderer",
-				WS_OVERLAPPEDWINDOW,
-				CW_USEDEFAULT, CW_USEDEFAULT,
-				800, 600,
+				FULLSCREEN_STYLE,
+				pos.left, pos.top,
+				pos.right, pos.bottom,
 				nullptr,
 				nullptr,
 				hInstance,
@@ -279,6 +332,30 @@ public:
 		UpdateWindow(m_hwnd);
 
 		return S_OK;
+	}
+
+	RECT GetMaximizedRect()
+	{
+		DISPLAY_DEVICE dd;
+		dd.cb = sizeof(dd);
+		int i = 0;
+
+		RECT pos = { CW_USEDEFAULT, CW_USEDEFAULT, 800, 600 };
+		while (EnumDisplayDevices(NULL, i, &dd, 0)) {
+			if (dd.StateFlags & DISPLAY_DEVICE_PRIMARY_DEVICE) {
+				DEVMODE dm;
+				dm.dmSize = sizeof(dm);
+				if (EnumDisplaySettings(dd.DeviceName, ENUM_CURRENT_SETTINGS, &dm)) {
+					pos.left = dm.dmPosition.x;
+					pos.top = dm.dmPosition.y;
+					pos.right = dm.dmPelsWidth;
+					pos.bottom = dm.dmPelsHeight;
+				}
+				break;
+			}
+			i++;
+		}
+		return pos;
 	}
 
 	// Create resources which are not dependent on the device
@@ -307,7 +384,7 @@ public:
 
 		if (SUCCEEDED(hr)) {
 			hr = m_pDWriteFactory->CreateTextFormat(
-				L"Segoe UI",
+				m_TextFontName.c_str(),
 				nullptr,
 				DWRITE_FONT_WEIGHT_NORMAL,
 				DWRITE_FONT_STYLE_NORMAL,
@@ -344,7 +421,7 @@ public:
 			if (SUCCEEDED(hr)) {
 				// Create a solid color brush for text
 				hr = m_pRenderTarget->CreateSolidColorBrush(
-					D2D1::ColorF(D2D1::ColorF::Black),
+					D2D1::ColorF(m_TextColor),
 					m_pTextBrush.GetAddressOf()
 				);
 			}
@@ -390,6 +467,11 @@ public:
 
 	HRESULT LoadBitmapFromFileWithTransparencyMixedToBlack(Sprite* sprite)
 	{
+		if (!m_pRenderTarget)
+		{
+			return -1;
+		}
+
 		// Initialize WIC and load the image
 		Microsoft::WRL::ComPtr<IWICBitmapDecoder> pDecoder;
 		Microsoft::WRL::ComPtr<IWICBitmapFrameDecode> pFrame;
@@ -442,7 +524,7 @@ public:
 		hr = pConverter->CopyPixels(nullptr, stride, static_cast<UINT>(pixelData.size()), pixelData.data());
 		if (FAILED(hr)) return hr;
 
-		const BYTE bgColor[3] = { 0, 0, 0 };
+		const BYTE bgColor[3] = { (BYTE)m_BackgroundColor, (BYTE)(m_BackgroundColor >> 8), (BYTE)(m_BackgroundColor >> 16) };
 
 		// Modify the pixel data to blend with black
 		for (UINT y = 0; y < height; ++y)
@@ -592,6 +674,22 @@ public:
 		}
 	}
 
+	void SetFullscreen(bool fullscreen)
+	{
+		if (fullscreen) {
+			RECT pos = GetMaximizedRect();
+			SetWindowLong(m_hwnd, GWL_STYLE, FULLSCREEN_STYLE | WS_VISIBLE);
+			SetWindowPos(m_hwnd, HWND_TOP, pos.left, pos.top, pos.right, pos.bottom, SWP_NOZORDER | SWP_FRAMECHANGED);
+		}
+		else {
+			int w = 640, h = 480;
+			int x = (GetSystemMetrics(SM_CXSCREEN) - w) / 2;
+			int y = (GetSystemMetrics(SM_CYSCREEN) - h) / 2;
+			SetWindowLong(m_hwnd, GWL_STYLE, WS_OVERLAPPEDWINDOW | WS_VISIBLE);
+			SetWindowPos(m_hwnd, nullptr, x, y, w, h, SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED);
+		}
+	}
+
 	void StartSwap(bool animate, int offset)
 	{
 		auto info = m_Library.GotoImage(offset);
@@ -652,20 +750,34 @@ public:
 			return DefWindowProc(hwnd, message, wParam, lParam);
 		}
 
-		LRESULT result = 0;
 		switch (message) {
+		case WM_SYSCOMMAND: // Detect maximize button click
+			if (wParam == SC_MAXIMIZE) {
+				pApp->SetFullscreen(true);
+			}
+			break;
+
 		case WM_SIZE:
+			pApp->OnResize(LOWORD(lParam), HIWORD(lParam));
+			break;
+
+		case WM_SYSKEYDOWN:
 		{
-			UINT width = LOWORD(lParam);
-			UINT height = HIWORD(lParam);
-			pApp->OnResize(width, height);
-			result = 0;
+			auto isAltDown = GetKeyState(VK_MENU) & 0x8000;
+			if (isAltDown && wParam == VK_RETURN) {
+				BOOL isFullscreen = !(GetWindowLong(hwnd, GWL_STYLE) & WS_OVERLAPPEDWINDOW);
+				pApp->SetFullscreen(!isFullscreen);
+			}
 		}
 		break;
 
 		case WM_KEYDOWN:
 		{
 			switch (wParam) {
+			case VK_ESCAPE:
+				pApp->SetFullscreen(false);
+				break;
+
 			case VK_LEFT:
 				pApp->StartSwap(false, -1);
 				InvalidateRect(hwnd, nullptr, FALSE);
@@ -687,30 +799,22 @@ public:
 
 		case WM_DISPLAYCHANGE:
 			InvalidateRect(hwnd, nullptr, FALSE);
-			result = 0;
 			break;
 
 		case WM_PAINT:
-		{
 			pApp->OnRender();
 			ValidateRect(hwnd, nullptr);
-			result = 0;
-		}
-		break;
+			break;
 
 		case WM_DESTROY:
-		{
 			PostQuitMessage(0);
-			result = 1;
-		}
-		break;
+			break;
 
 		default:
-			result = DefWindowProc(hwnd, message, wParam, lParam);
 			break;
 		}
 
-		return result;
+		return DefWindowProc(hwnd, message, wParam, lParam);
 	}
 
 	// Load a bitmap from a file

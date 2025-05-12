@@ -4,6 +4,9 @@
 #define WIN32_LEAN_AND_MEAN
 #include <exiv2.hpp>
 
+#include <cwctype>
+#include <random>
+
 void ImageFileNameLibrary::SetPaths(const std::vector<std::wstring>& include, const std::vector<std::wstring>& exclude)
 {
 	for (const auto& dir : include) {
