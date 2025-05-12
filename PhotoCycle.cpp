@@ -205,7 +205,9 @@ private:
 	Sprite* m_NextSprite = new Sprite();
 	ComPtr<IDWriteFactory> m_pDWriteFactory;
 	ComPtr<IDWriteTextFormat> m_pTextFormat;
-	ComPtr<ID2D1SolidColorBrush> m_pTextBrush;
+	ComPtr<IDWriteTextLayout> m_pTextLayout;
+	ComPtr<ID2D1SolidColorBrush> m_pTextOutlineBrush;
+	ComPtr<ID2D1SolidColorBrush> m_pTextFillBrush;
 	ImageFileNameLibrary m_Library;
 
 	float m_FadeDuration = 0.3f;
@@ -218,6 +220,9 @@ private:
 	std::wstring m_TextFontName = L"Segoe UI";
 	UINT32 m_TextColor = 0xffffff;
 	UINT32 m_BackgroundColor = 0x00000000;
+	float m_FontSize = 48;
+	float m_OutlineWidth = 5;
+	DWRITE_FONT_WEIGHT m_FontWeight = DWRITE_FONT_WEIGHT_BOLD;
 
 	bool m_IsPreview = false;
 
@@ -243,6 +248,8 @@ public:
 
 		m_FadeDuration = ReadFloat(INI_SETTINGS, L"FadeDuration", m_FadeDuration);
 		m_DisplayDuration = ReadFloat(INI_SETTINGS, L"DisplayDuration", m_DisplayDuration);
+		m_FontSize = ReadFloat(INI_SETTINGS, L"FontSize", m_FontSize);
+		m_OutlineWidth = ReadFloat(INI_SETTINGS, L"Outline", m_OutlineWidth);
 		m_RenderText = ReadBool(INI_SETTINGS, INI_RENDER_TEXT, m_RenderText);
 		m_TextFontName = ReadString(INI_SETTINGS, L"Font", m_TextFontName.c_str());
 		m_TextColor = ReadColor(INI_SETTINGS, L"FontColor", m_TextColor);
@@ -386,10 +393,10 @@ public:
 			hr = m_pDWriteFactory->CreateTextFormat(
 				m_TextFontName.c_str(),
 				nullptr,
-				DWRITE_FONT_WEIGHT_NORMAL,
+				m_FontWeight,
 				DWRITE_FONT_STYLE_NORMAL,
 				DWRITE_FONT_STRETCH_NORMAL,
-				16.0f,
+				m_FontSize,
 				L"en-us",
 				m_pTextFormat.GetAddressOf()
 			);
@@ -421,8 +428,14 @@ public:
 			if (SUCCEEDED(hr)) {
 				// Create a solid color brush for text
 				hr = m_pRenderTarget->CreateSolidColorBrush(
+					D2D1::ColorF(D2D1::ColorF::Black),
+					m_pTextOutlineBrush.GetAddressOf()
+				);
+
+				// Create a solid color brush for text
+				hr = m_pRenderTarget->CreateSolidColorBrush(
 					D2D1::ColorF(m_TextColor),
-					m_pTextBrush.GetAddressOf()
+					m_pTextFillBrush.GetAddressOf()
 				);
 			}
 		}
@@ -566,10 +579,9 @@ public:
 			return;
 		}
 
-		D2D1_POINT_2F upperLeft = D2D1::Point2F(50.0f, 50.0f);
-
 		RECT screenRect;
 		GetClientRect(m_hwnd, &screenRect); // Or use GetSystemMetrics(SM_CXSCREEN) and SM_CYSCREEN for full screen size
+		auto screenWidth = screenRect.right - screenRect.left;
 
 		// Get bitmap dimensions
 		float imgWidth = sprite->bitmap->GetSize().width;
@@ -577,7 +589,7 @@ public:
 
 		// Calculate the scaling factor based on the screen dimensions
 		float scaleFactor = std::max(
-			(screenRect.right - screenRect.left) / imgWidth,
+			screenWidth / imgWidth,
 			(screenRect.bottom - screenRect.top) / imgHeight
 		);
 
@@ -586,7 +598,7 @@ public:
 		float scaledHeight = imgHeight * scaleFactor;
 
 		// Center the image on the screen (optional)
-		float upperLeftX = (screenRect.right - screenRect.left - scaledWidth) / 2.0f;
+		float upperLeftX = (screenWidth - scaledWidth) / 2.0f;
 		float upperLeftY = (screenRect.bottom - screenRect.top - scaledHeight) / 2.0f;
 
 		// Draw the bitmap, scaled and centered
@@ -604,21 +616,94 @@ public:
 
 		if (m_RenderText)
 		{
-			auto caption = sprite->imageInfo->folderName;
-			// Draw label for the first texture
-			m_pRenderTarget->DrawText(
-				caption.c_str(),
-				static_cast<UINT32>(caption.length()),
-				m_pTextFormat.Get(),
-				D2D1::RectF(
-					upperLeft.x,
-					upperLeft.y + scaledHeight + 5.0f,
-					upperLeft.x + scaledWidth,
-					upperLeft.y + scaledHeight + 30.0f
-				),
-				m_pTextBrush.Get()
-			);
+			RenderText(sprite->imageInfo->folderName, 100, 100, screenWidth, 200);
 		}
+	}
+
+	void RenderText(const std::wstring& caption, float x, float y, float w, float h)
+	{
+		if (w <= 0 || h <= 0)
+		{
+			return;
+		}
+
+		m_pTextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
+		m_pTextFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_FAR);
+
+		ComPtr<IDWriteFontCollection> pFontCollection;
+		ComPtr<IDWriteFont> pFont;
+		ComPtr<IDWriteFontFace> pFontFace;
+		ComPtr<IDWriteFontFamily> pFontFamily;
+		if (SUCCEEDED(m_pDWriteFactory->GetSystemFontCollection(&pFontCollection))) {
+			if (SUCCEEDED(pFontCollection->GetFontFamily(0, &pFontFamily))) {
+				if (SUCCEEDED(pFontFamily->GetFont(0, &pFont))) {
+					pFont->CreateFontFace(&pFontFace);
+				}
+			}
+		}
+		pFont->CreateFontFace(&pFontFace);
+
+		// Convert Unicode characters to glyph indices
+		std::vector<UINT32> unicodeCodePoints(caption.length());
+		for (int i = 0; i < caption.length(); ++i) {
+			unicodeCodePoints.push_back(caption[i]);
+		}
+		std::vector<UINT16> glyphIndices(unicodeCodePoints.size());
+		pFontFace->GetGlyphIndices(unicodeCodePoints.data(), (UINT32)unicodeCodePoints.size(), glyphIndices.data());
+		FLOAT dpiX, dpiY;
+		m_pRenderTarget->GetDpi(&dpiX, &dpiY);
+		float pixelsPerDip = dpiX / 96.0f; // Convert DPI to pixels per DIP
+
+		DWRITE_FONT_METRICS fontMetrics;
+		pFontFace->GetGdiCompatibleMetrics(m_FontSize, pixelsPerDip, nullptr, &fontMetrics);
+
+		std::vector<DWRITE_GLYPH_METRICS> glyphMetrics(glyphIndices.size());
+		HRESULT hr = pFontFace->GetGdiCompatibleGlyphMetrics(m_FontSize, pixelsPerDip, nullptr, FALSE, glyphIndices.data(), (UINT32)glyphIndices.size(), glyphMetrics.data());
+
+		// Convert advance widths
+		std::vector<FLOAT> glyphAdvances(glyphIndices.size());
+		for (size_t i = 0; i < glyphIndices.size(); ++i) {
+			glyphAdvances[i] = static_cast<FLOAT>(glyphMetrics[i].advanceWidth) / fontMetrics.designUnitsPerEm * m_FontSize - m_OutlineWidth;
+		}
+
+		float advW = 0;
+		for (float adv : glyphAdvances) { advW += adv; }
+
+		// Generate outline from glyph run
+		ComPtr<ID2D1PathGeometry> pPathGeometry;
+		ComPtr<ID2D1GeometrySink> pSink;
+		m_pD2DFactory->CreatePathGeometry(&pPathGeometry);
+		pPathGeometry->Open(&pSink);
+
+		std::vector<DWRITE_GLYPH_OFFSET> glyphOffsets(glyphIndices.size());
+		pFontFace->GetGlyphRunOutline(m_FontSize, glyphIndices.data(), glyphAdvances.data(), glyphOffsets.data(), (UINT32)glyphIndices.size(), FALSE, FALSE, pSink.Get());
+
+		pSink->Close();
+
+		RECT screenRect;
+		GetClientRect(m_hwnd, &screenRect);
+		auto screenWidth = screenRect.right - screenRect.left;
+		auto screenHeight = screenRect.bottom - screenRect.top;
+
+		D2D1_MATRIX_3X2_F transform = D2D1::Matrix3x2F::Translation(- advW / 2, y + h);
+		ComPtr<ID2D1TransformedGeometry> pTransformedGeometry;
+		m_pD2DFactory->CreateTransformedGeometry(pPathGeometry.Get(), &transform, &pTransformedGeometry);
+		m_pRenderTarget->DrawGeometry(pTransformedGeometry.Get(), m_pTextOutlineBrush.Get(), m_OutlineWidth);
+
+		m_pDWriteFactory->CreateTextLayout(
+			caption.c_str(),
+			(UINT32)caption.length(),
+			m_pTextFormat.Get(),
+			w, h,
+			m_pTextLayout.GetAddressOf()
+		);
+
+		m_pRenderTarget->DrawTextLayout(
+			D2D1::Point2F(x, y),
+			m_pTextLayout.Get(),
+			m_pTextFillBrush.Get(),
+			D2D1_DRAW_TEXT_OPTIONS_NO_SNAP
+		);
 	}
 
 	// Draw the content
@@ -640,21 +725,10 @@ public:
 		DrawSprite(m_NextSprite);
 
 		// Draw application instructions
-		std::wstring instructionText =
-			L"...";
-
-		m_pRenderTarget->DrawText(
-			instructionText.c_str(),
-			static_cast<UINT32>(instructionText.length()),
-			m_pTextFormat.Get(),
-			D2D1::RectF(
-				50.0f,
-				rtSize.height - 100.0f,
-				rtSize.width - 50.0f,
-				rtSize.height - 10.0f
-			),
-			m_pTextBrush.Get()
-		);
+		if (m_CurrentSprite && m_CurrentSprite->imageInfo)
+		{
+			RenderText(L"......You cna see me! " + m_CurrentSprite->imageInfo->filePath, 20, 20, rtSize.width - 20 * 2, rtSize.height - 20);
+		}
 
 		hr = m_pRenderTarget->EndDraw();
 
@@ -819,7 +893,7 @@ public:
 
 	// Load a bitmap from a file
 	HRESULT LoadBitmapFromFile(
-		ID2D1RenderTarget* pRenderTarget,
+		ID2D1RenderTarget* m_pRenderTarget,
 		IWICImagingFactory* pIWICFactory,
 		PCWSTR uri,
 		UINT destinationWidth,
@@ -889,7 +963,7 @@ public:
 				// Choose the appropriate source based on whether we're scaling
 				if (destinationWidth == 0 || destinationHeight == 0) {
 					// Use the converter directly if no scaling is needed
-					hr = pRenderTarget->CreateBitmapFromWicBitmap(
+					hr = m_pRenderTarget->CreateBitmapFromWicBitmap(
 						pConverter.Get(),
 						nullptr,
 						ppBitmap
@@ -897,7 +971,7 @@ public:
 				}
 				else {
 					// Use the scaler when dimensions are specified
-					hr = pRenderTarget->CreateBitmapFromWicBitmap(
+					hr = m_pRenderTarget->CreateBitmapFromWicBitmap(
 						pScaler.Get(),
 						nullptr,
 						ppBitmap
