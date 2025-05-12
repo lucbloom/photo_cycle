@@ -1,0 +1,346 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>17.0</VCProjectVersion>
+    <Keyword>Win32Proj</Keyword>
+    <ProjectGuid>{12515b15-f1c2-4f88-b5a2-fec67ca3cfd3}</ProjectGuid>
+    <RootNamespace>PhotoCycle</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <TargetExt>.scr</TargetExt>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <TargetExt>.scr</TargetExt>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <TargetExt>.scr</TargetExt>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <TargetExt>.scr</TargetExt>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalIncludeDirectories>.\;.\exiv2\include;.\exiv2\include\exiv2;.\zlib</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalIncludeDirectories>.\;.\exiv2\include;.\exiv2\include\exiv2;.\zlib</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalIncludeDirectories>.\;.\exiv2\include;.\exiv2\include\exiv2;.\zlib</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <AdditionalIncludeDirectories>.\;.\exiv2\include;.\exiv2\include\exiv2;.\zlib</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="exiv2\include\exiv2lib_export.h" />
+    <ClInclude Include="exiv2\include\exiv2\asfvideo.hpp" />
+    <ClInclude Include="exiv2\include\exiv2\basicio.hpp" />
+    <ClInclude Include="exiv2\include\exiv2\bmffimage.hpp" />
+    <ClInclude Include="exiv2\include\exiv2\bmpimage.hpp" />
+    <ClInclude Include="exiv2\include\exiv2\config.h" />
+    <ClInclude Include="exiv2\include\exiv2\convert.hpp" />
+    <ClInclude Include="exiv2\include\exiv2\cr2image.hpp" />
+    <ClInclude Include="exiv2\include\exiv2\crwimage.hpp" />
+    <ClInclude Include="exiv2\include\exiv2\datasets.hpp" />
+    <ClInclude Include="exiv2\include\exiv2\easyaccess.hpp" />
+    <ClInclude Include="exiv2\include\exiv2\epsimage.hpp" />
+    <ClInclude Include="exiv2\include\exiv2\error.hpp" />
+    <ClInclude Include="exiv2\include\exiv2\exif.hpp" />
+    <ClInclude Include="exiv2\include\exiv2\exiv2.hpp" />
+    <ClInclude Include="exiv2\include\exiv2\futils.hpp" />
+    <ClInclude Include="exiv2\include\exiv2\gifimage.hpp" />
+    <ClInclude Include="exiv2\include\exiv2\http.hpp" />
+    <ClInclude Include="exiv2\include\exiv2\image.hpp" />
+    <ClInclude Include="exiv2\include\exiv2\image_types.hpp" />
+    <ClInclude Include="exiv2\include\exiv2\iptc.hpp" />
+    <ClInclude Include="exiv2\include\exiv2\jp2image.hpp" />
+    <ClInclude Include="exiv2\include\exiv2\jpgimage.hpp" />
+    <ClInclude Include="exiv2\include\exiv2\matroskavideo.hpp" />
+    <ClInclude Include="exiv2\include\exiv2\metadatum.hpp" />
+    <ClInclude Include="exiv2\include\exiv2\mrwimage.hpp" />
+    <ClInclude Include="exiv2\include\exiv2\orfimage.hpp" />
+    <ClInclude Include="exiv2\include\exiv2\pgfimage.hpp" />
+    <ClInclude Include="exiv2\include\exiv2\photoshop.hpp" />
+    <ClInclude Include="exiv2\include\exiv2\pngimage.hpp" />
+    <ClInclude Include="exiv2\include\exiv2\preview.hpp" />
+    <ClInclude Include="exiv2\include\exiv2\properties.hpp" />
+    <ClInclude Include="exiv2\include\exiv2\psdimage.hpp" />
+    <ClInclude Include="exiv2\include\exiv2\quicktimevideo.hpp" />
+    <ClInclude Include="exiv2\include\exiv2\rafimage.hpp" />
+    <ClInclude Include="exiv2\include\exiv2\riffvideo.hpp" />
+    <ClInclude Include="exiv2\include\exiv2\rw2image.hpp" />
+    <ClInclude Include="exiv2\include\exiv2\slice.hpp" />
+    <ClInclude Include="exiv2\include\exiv2\tags.hpp" />
+    <ClInclude Include="exiv2\include\exiv2\tgaimage.hpp" />
+    <ClInclude Include="exiv2\include\exiv2\tiffimage.hpp" />
+    <ClInclude Include="exiv2\include\exiv2\types.hpp" />
+    <ClInclude Include="exiv2\include\exiv2\value.hpp" />
+    <ClInclude Include="exiv2\include\exiv2\version.hpp" />
+    <ClInclude Include="exiv2\include\exiv2\webpimage.hpp" />
+    <ClInclude Include="exiv2\include\exiv2\xmpsidecar.hpp" />
+    <ClInclude Include="exiv2\include\exiv2\xmp_exiv2.hpp" />
+    <ClInclude Include="exiv2\include\exv_conf.h" />
+    <ClInclude Include="exiv2\src\canonmn_int.hpp" />
+    <ClInclude Include="exiv2\src\casiomn_int.hpp" />
+    <ClInclude Include="exiv2\src\cr2header_int.hpp" />
+    <ClInclude Include="exiv2\src\crwimage_int.hpp" />
+    <ClInclude Include="exiv2\src\enforce.hpp" />
+    <ClInclude Include="exiv2\src\fff.h" />
+    <ClInclude Include="exiv2\src\fujimn_int.hpp" />
+    <ClInclude Include="exiv2\src\helper_functions.hpp" />
+    <ClInclude Include="exiv2\src\i18n.h" />
+    <ClInclude Include="exiv2\src\image_int.hpp" />
+    <ClInclude Include="exiv2\src\jp2image_int.hpp" />
+    <ClInclude Include="exiv2\src\makernote_int.hpp" />
+    <ClInclude Include="exiv2\src\minoltamn_int.hpp" />
+    <ClInclude Include="exiv2\src\nikonmn_int.hpp" />
+    <ClInclude Include="exiv2\src\olympusmn_int.hpp" />
+    <ClInclude Include="exiv2\src\orfimage_int.hpp" />
+    <ClInclude Include="exiv2\src\panasonicmn_int.hpp" />
+    <ClInclude Include="exiv2\src\pentaxmn_int.hpp" />
+    <ClInclude Include="exiv2\src\pngchunk_int.hpp" />
+    <ClInclude Include="exiv2\src\rw2image_int.hpp" />
+    <ClInclude Include="exiv2\src\safe_op.hpp" />
+    <ClInclude Include="exiv2\src\samsungmn_int.hpp" />
+    <ClInclude Include="exiv2\src\sigmamn_int.hpp" />
+    <ClInclude Include="exiv2\src\sonymn_int.hpp" />
+    <ClInclude Include="exiv2\src\tags_int.hpp" />
+    <ClInclude Include="exiv2\src\tiffcomposite_int.hpp" />
+    <ClInclude Include="exiv2\src\tifffwd_int.hpp" />
+    <ClInclude Include="exiv2\src\tiffimage_int.hpp" />
+    <ClInclude Include="exiv2\src\tiffvisitor_int.hpp" />
+    <ClInclude Include="exiv2\src\tzfile.h" />
+    <ClInclude Include="exiv2\src\utils.hpp" />
+    <ClInclude Include="framework.h" />
+    <ClInclude Include="ImageManager.h" />
+    <ClInclude Include="PhotoCycle.h" />
+    <ClInclude Include="Resource.h" />
+    <ClInclude Include="TransitionManager.h" />
+    <ClInclude Include="zlib\crc32.h" />
+    <ClInclude Include="zlib\deflate.h" />
+    <ClInclude Include="zlib\gzguts.h" />
+    <ClInclude Include="zlib\inffast.h" />
+    <ClInclude Include="zlib\inffixed.h" />
+    <ClInclude Include="zlib\inflate.h" />
+    <ClInclude Include="zlib\inftrees.h" />
+    <ClInclude Include="zlib\trees.h" />
+    <ClInclude Include="zlib\zconf.h" />
+    <ClInclude Include="zlib\zlib.h" />
+    <ClInclude Include="zlib\zutil.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="exiv2\src\asfvideo.cpp" />
+    <ClCompile Include="exiv2\src\basicio.cpp" />
+    <ClCompile Include="exiv2\src\bmffimage.cpp" />
+    <ClCompile Include="exiv2\src\bmpimage.cpp" />
+    <ClCompile Include="exiv2\src\canonmn_int.cpp" />
+    <ClCompile Include="exiv2\src\casiomn_int.cpp" />
+    <ClCompile Include="exiv2\src\convert.cpp" />
+    <ClCompile Include="exiv2\src\cr2header_int.cpp" />
+    <ClCompile Include="exiv2\src\cr2image.cpp" />
+    <ClCompile Include="exiv2\src\crwimage.cpp" />
+    <ClCompile Include="exiv2\src\crwimage_int.cpp" />
+    <ClCompile Include="exiv2\src\datasets.cpp" />
+    <ClCompile Include="exiv2\src\easyaccess.cpp" />
+    <ClCompile Include="exiv2\src\epsimage.cpp" />
+    <ClCompile Include="exiv2\src\error.cpp" />
+    <ClCompile Include="exiv2\src\exif.cpp" />
+    <ClCompile Include="exiv2\src\fujimn_int.cpp" />
+    <ClCompile Include="exiv2\src\futils.cpp" />
+    <ClCompile Include="exiv2\src\gifimage.cpp" />
+    <ClCompile Include="exiv2\src\helper_functions.cpp" />
+    <ClCompile Include="exiv2\src\http.cpp" />
+    <ClCompile Include="exiv2\src\image.cpp" />
+    <ClCompile Include="exiv2\src\image_int.cpp" />
+    <ClCompile Include="exiv2\src\iptc.cpp" />
+    <ClCompile Include="exiv2\src\jp2image.cpp" />
+    <ClCompile Include="exiv2\src\jp2image_int.cpp" />
+    <ClCompile Include="exiv2\src\jpgimage.cpp" />
+    <ClCompile Include="exiv2\src\makernote_int.cpp" />
+    <ClCompile Include="exiv2\src\matroskavideo.cpp" />
+    <ClCompile Include="exiv2\src\metadatum.cpp" />
+    <ClCompile Include="exiv2\src\minoltamn_int.cpp" />
+    <ClCompile Include="exiv2\src\mrwimage.cpp" />
+    <ClCompile Include="exiv2\src\nikonmn_int.cpp" />
+    <ClCompile Include="exiv2\src\olympusmn_int.cpp" />
+    <ClCompile Include="exiv2\src\orfimage.cpp" />
+    <ClCompile Include="exiv2\src\orfimage_int.cpp" />
+    <ClCompile Include="exiv2\src\panasonicmn_int.cpp" />
+    <ClCompile Include="exiv2\src\pentaxmn_int.cpp" />
+    <ClCompile Include="exiv2\src\pgfimage.cpp" />
+    <ClCompile Include="exiv2\src\photoshop.cpp" />
+    <ClCompile Include="exiv2\src\pngchunk_int.cpp" />
+    <ClCompile Include="exiv2\src\pngimage.cpp" />
+    <ClCompile Include="exiv2\src\preview.cpp" />
+    <ClCompile Include="exiv2\src\properties.cpp" />
+    <ClCompile Include="exiv2\src\psdimage.cpp" />
+    <ClCompile Include="exiv2\src\quicktimevideo.cpp" />
+    <ClCompile Include="exiv2\src\rafimage.cpp" />
+    <ClCompile Include="exiv2\src\riffvideo.cpp" />
+    <ClCompile Include="exiv2\src\rw2image.cpp" />
+    <ClCompile Include="exiv2\src\rw2image_int.cpp" />
+    <ClCompile Include="exiv2\src\samsungmn_int.cpp" />
+    <ClCompile Include="exiv2\src\sigmamn_int.cpp" />
+    <ClCompile Include="exiv2\src\sonymn_int.cpp" />
+    <ClCompile Include="exiv2\src\tags.cpp" />
+    <ClCompile Include="exiv2\src\tags_int.cpp" />
+    <ClCompile Include="exiv2\src\tgaimage.cpp" />
+    <ClCompile Include="exiv2\src\tiffcomposite_int.cpp" />
+    <ClCompile Include="exiv2\src\tiffimage.cpp" />
+    <ClCompile Include="exiv2\src\tiffimage_int.cpp" />
+    <ClCompile Include="exiv2\src\tiffvisitor_int.cpp" />
+    <ClCompile Include="exiv2\src\types.cpp" />
+    <ClCompile Include="exiv2\src\utils.cpp" />
+    <ClCompile Include="exiv2\src\value.cpp" />
+    <ClCompile Include="exiv2\src\version.cpp" />
+    <ClCompile Include="exiv2\src\webpimage.cpp" />
+    <ClCompile Include="exiv2\src\xmp.cpp" />
+    <ClCompile Include="exiv2\src\xmpsidecar.cpp" />
+    <ClCompile Include="ImageManager.cpp" />
+    <ClCompile Include="PhotoCycle.cpp" />
+    <ClCompile Include="TransitionManager.cpp" />
+    <ClCompile Include="zlib\adler32.c" />
+    <ClCompile Include="zlib\compress.c" />
+    <ClCompile Include="zlib\crc32.c" />
+    <ClCompile Include="zlib\deflate.c" />
+    <ClCompile Include="zlib\gzclose.c" />
+    <ClCompile Include="zlib\gzlib.c" />
+    <ClCompile Include="zlib\gzread.c" />
+    <ClCompile Include="zlib\gzwrite.c" />
+    <ClCompile Include="zlib\infback.c" />
+    <ClCompile Include="zlib\inffast.c" />
+    <ClCompile Include="zlib\inflate.c" />
+    <ClCompile Include="zlib\inftrees.c" />
+    <ClCompile Include="zlib\trees.c" />
+    <ClCompile Include="zlib\uncompr.c" />
+    <ClCompile Include="zlib\zutil.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="PhotoCycle.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="PhotoCycle.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="config.ini" />
+    <None Include="exiv2\src\TODO" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

@@ -1,0 +1,560 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClInclude Include="framework.h" />
+    <ClInclude Include="PhotoCycle.h" />
+    <ClInclude Include="Resource.h" />
+    <ClInclude Include="ImageManager.h" />
+    <ClInclude Include="TransitionManager.h" />
+    <ClInclude Include="exiv2\src\canonmn_int.hpp">
+      <Filter>exiv2\src</Filter>
+    </ClInclude>
+    <ClInclude Include="exiv2\src\casiomn_int.hpp">
+      <Filter>exiv2\src</Filter>
+    </ClInclude>
+    <ClInclude Include="exiv2\src\cr2header_int.hpp">
+      <Filter>exiv2\src</Filter>
+    </ClInclude>
+    <ClInclude Include="exiv2\src\crwimage_int.hpp">
+      <Filter>exiv2\src</Filter>
+    </ClInclude>
+    <ClInclude Include="exiv2\src\enforce.hpp">
+      <Filter>exiv2\src</Filter>
+    </ClInclude>
+    <ClInclude Include="exiv2\src\fff.h">
+      <Filter>exiv2\src</Filter>
+    </ClInclude>
+    <ClInclude Include="exiv2\src\fujimn_int.hpp">
+      <Filter>exiv2\src</Filter>
+    </ClInclude>
+    <ClInclude Include="exiv2\src\helper_functions.hpp">
+      <Filter>exiv2\src</Filter>
+    </ClInclude>
+    <ClInclude Include="exiv2\src\i18n.h">
+      <Filter>exiv2\src</Filter>
+    </ClInclude>
+    <ClInclude Include="exiv2\src\image_int.hpp">
+      <Filter>exiv2\src</Filter>
+    </ClInclude>
+    <ClInclude Include="exiv2\src\jp2image_int.hpp">
+      <Filter>exiv2\src</Filter>
+    </ClInclude>
+    <ClInclude Include="exiv2\src\makernote_int.hpp">
+      <Filter>exiv2\src</Filter>
+    </ClInclude>
+    <ClInclude Include="exiv2\src\minoltamn_int.hpp">
+      <Filter>exiv2\src</Filter>
+    </ClInclude>
+    <ClInclude Include="exiv2\src\nikonmn_int.hpp">
+      <Filter>exiv2\src</Filter>
+    </ClInclude>
+    <ClInclude Include="exiv2\src\olympusmn_int.hpp">
+      <Filter>exiv2\src</Filter>
+    </ClInclude>
+    <ClInclude Include="exiv2\src\orfimage_int.hpp">
+      <Filter>exiv2\src</Filter>
+    </ClInclude>
+    <ClInclude Include="exiv2\src\panasonicmn_int.hpp">
+      <Filter>exiv2\src</Filter>
+    </ClInclude>
+    <ClInclude Include="exiv2\src\pentaxmn_int.hpp">
+      <Filter>exiv2\src</Filter>
+    </ClInclude>
+    <ClInclude Include="exiv2\src\pngchunk_int.hpp">
+      <Filter>exiv2\src</Filter>
+    </ClInclude>
+    <ClInclude Include="exiv2\src\rw2image_int.hpp">
+      <Filter>exiv2\src</Filter>
+    </ClInclude>
+    <ClInclude Include="exiv2\src\safe_op.hpp">
+      <Filter>exiv2\src</Filter>
+    </ClInclude>
+    <ClInclude Include="exiv2\src\samsungmn_int.hpp">
+      <Filter>exiv2\src</Filter>
+    </ClInclude>
+    <ClInclude Include="exiv2\src\sigmamn_int.hpp">
+      <Filter>exiv2\src</Filter>
+    </ClInclude>
+    <ClInclude Include="exiv2\src\sonymn_int.hpp">
+      <Filter>exiv2\src</Filter>
+    </ClInclude>
+    <ClInclude Include="exiv2\src\tags_int.hpp">
+      <Filter>exiv2\src</Filter>
+    </ClInclude>
+    <ClInclude Include="exiv2\src\tiffcomposite_int.hpp">
+      <Filter>exiv2\src</Filter>
+    </ClInclude>
+    <ClInclude Include="exiv2\src\tifffwd_int.hpp">
+      <Filter>exiv2\src</Filter>
+    </ClInclude>
+    <ClInclude Include="exiv2\src\tiffimage_int.hpp">
+      <Filter>exiv2\src</Filter>
+    </ClInclude>
+    <ClInclude Include="exiv2\src\tiffvisitor_int.hpp">
+      <Filter>exiv2\src</Filter>
+    </ClInclude>
+    <ClInclude Include="exiv2\src\tzfile.h">
+      <Filter>exiv2\src</Filter>
+    </ClInclude>
+    <ClInclude Include="exiv2\src\utils.hpp">
+      <Filter>exiv2\src</Filter>
+    </ClInclude>
+    <ClInclude Include="zlib\inffast.h">
+      <Filter>zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="zlib\inffixed.h">
+      <Filter>zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="zlib\inflate.h">
+      <Filter>zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="zlib\inftrees.h">
+      <Filter>zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="zlib\trees.h">
+      <Filter>zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="zlib\crc32.h">
+      <Filter>zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="zlib\deflate.h">
+      <Filter>zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="zlib\gzguts.h">
+      <Filter>zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="zlib\zconf.h">
+      <Filter>zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="zlib\zlib.h">
+      <Filter>zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="zlib\zutil.h">
+      <Filter>zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="exiv2\include\exiv2lib_export.h">
+      <Filter>exiv2\include</Filter>
+    </ClInclude>
+    <ClInclude Include="exiv2\include\exv_conf.h">
+      <Filter>exiv2\include</Filter>
+    </ClInclude>
+    <ClInclude Include="exiv2\include\exiv2\asfvideo.hpp">
+      <Filter>exiv2\include\exiv2</Filter>
+    </ClInclude>
+    <ClInclude Include="exiv2\include\exiv2\basicio.hpp">
+      <Filter>exiv2\include\exiv2</Filter>
+    </ClInclude>
+    <ClInclude Include="exiv2\include\exiv2\bmffimage.hpp">
+      <Filter>exiv2\include\exiv2</Filter>
+    </ClInclude>
+    <ClInclude Include="exiv2\include\exiv2\bmpimage.hpp">
+      <Filter>exiv2\include\exiv2</Filter>
+    </ClInclude>
+    <ClInclude Include="exiv2\include\exiv2\config.h">
+      <Filter>exiv2\include\exiv2</Filter>
+    </ClInclude>
+    <ClInclude Include="exiv2\include\exiv2\convert.hpp">
+      <Filter>exiv2\include\exiv2</Filter>
+    </ClInclude>
+    <ClInclude Include="exiv2\include\exiv2\cr2image.hpp">
+      <Filter>exiv2\include\exiv2</Filter>
+    </ClInclude>
+    <ClInclude Include="exiv2\include\exiv2\crwimage.hpp">
+      <Filter>exiv2\include\exiv2</Filter>
+    </ClInclude>
+    <ClInclude Include="exiv2\include\exiv2\datasets.hpp">
+      <Filter>exiv2\include\exiv2</Filter>
+    </ClInclude>
+    <ClInclude Include="exiv2\include\exiv2\easyaccess.hpp">
+      <Filter>exiv2\include\exiv2</Filter>
+    </ClInclude>
+    <ClInclude Include="exiv2\include\exiv2\epsimage.hpp">
+      <Filter>exiv2\include\exiv2</Filter>
+    </ClInclude>
+    <ClInclude Include="exiv2\include\exiv2\error.hpp">
+      <Filter>exiv2\include\exiv2</Filter>
+    </ClInclude>
+    <ClInclude Include="exiv2\include\exiv2\exif.hpp">
+      <Filter>exiv2\include\exiv2</Filter>
+    </ClInclude>
+    <ClInclude Include="exiv2\include\exiv2\exiv2.hpp">
+      <Filter>exiv2\include\exiv2</Filter>
+    </ClInclude>
+    <ClInclude Include="exiv2\include\exiv2\futils.hpp">
+      <Filter>exiv2\include\exiv2</Filter>
+    </ClInclude>
+    <ClInclude Include="exiv2\include\exiv2\gifimage.hpp">
+      <Filter>exiv2\include\exiv2</Filter>
+    </ClInclude>
+    <ClInclude Include="exiv2\include\exiv2\http.hpp">
+      <Filter>exiv2\include\exiv2</Filter>
+    </ClInclude>
+    <ClInclude Include="exiv2\include\exiv2\image.hpp">
+      <Filter>exiv2\include\exiv2</Filter>
+    </ClInclude>
+    <ClInclude Include="exiv2\include\exiv2\image_types.hpp">
+      <Filter>exiv2\include\exiv2</Filter>
+    </ClInclude>
+    <ClInclude Include="exiv2\include\exiv2\iptc.hpp">
+      <Filter>exiv2\include\exiv2</Filter>
+    </ClInclude>
+    <ClInclude Include="exiv2\include\exiv2\jp2image.hpp">
+      <Filter>exiv2\include\exiv2</Filter>
+    </ClInclude>
+    <ClInclude Include="exiv2\include\exiv2\jpgimage.hpp">
+      <Filter>exiv2\include\exiv2</Filter>
+    </ClInclude>
+    <ClInclude Include="exiv2\include\exiv2\matroskavideo.hpp">
+      <Filter>exiv2\include\exiv2</Filter>
+    </ClInclude>
+    <ClInclude Include="exiv2\include\exiv2\metadatum.hpp">
+      <Filter>exiv2\include\exiv2</Filter>
+    </ClInclude>
+    <ClInclude Include="exiv2\include\exiv2\mrwimage.hpp">
+      <Filter>exiv2\include\exiv2</Filter>
+    </ClInclude>
+    <ClInclude Include="exiv2\include\exiv2\orfimage.hpp">
+      <Filter>exiv2\include\exiv2</Filter>
+    </ClInclude>
+    <ClInclude Include="exiv2\include\exiv2\pgfimage.hpp">
+      <Filter>exiv2\include\exiv2</Filter>
+    </ClInclude>
+    <ClInclude Include="exiv2\include\exiv2\photoshop.hpp">
+      <Filter>exiv2\include\exiv2</Filter>
+    </ClInclude>
+    <ClInclude Include="exiv2\include\exiv2\pngimage.hpp">
+      <Filter>exiv2\include\exiv2</Filter>
+    </ClInclude>
+    <ClInclude Include="exiv2\include\exiv2\preview.hpp">
+      <Filter>exiv2\include\exiv2</Filter>
+    </ClInclude>
+    <ClInclude Include="exiv2\include\exiv2\properties.hpp">
+      <Filter>exiv2\include\exiv2</Filter>
+    </ClInclude>
+    <ClInclude Include="exiv2\include\exiv2\psdimage.hpp">
+      <Filter>exiv2\include\exiv2</Filter>
+    </ClInclude>
+    <ClInclude Include="exiv2\include\exiv2\quicktimevideo.hpp">
+      <Filter>exiv2\include\exiv2</Filter>
+    </ClInclude>
+    <ClInclude Include="exiv2\include\exiv2\rafimage.hpp">
+      <Filter>exiv2\include\exiv2</Filter>
+    </ClInclude>
+    <ClInclude Include="exiv2\include\exiv2\riffvideo.hpp">
+      <Filter>exiv2\include\exiv2</Filter>
+    </ClInclude>
+    <ClInclude Include="exiv2\include\exiv2\rw2image.hpp">
+      <Filter>exiv2\include\exiv2</Filter>
+    </ClInclude>
+    <ClInclude Include="exiv2\include\exiv2\slice.hpp">
+      <Filter>exiv2\include\exiv2</Filter>
+    </ClInclude>
+    <ClInclude Include="exiv2\include\exiv2\tags.hpp">
+      <Filter>exiv2\include\exiv2</Filter>
+    </ClInclude>
+    <ClInclude Include="exiv2\include\exiv2\tgaimage.hpp">
+      <Filter>exiv2\include\exiv2</Filter>
+    </ClInclude>
+    <ClInclude Include="exiv2\include\exiv2\tiffimage.hpp">
+      <Filter>exiv2\include\exiv2</Filter>
+    </ClInclude>
+    <ClInclude Include="exiv2\include\exiv2\types.hpp">
+      <Filter>exiv2\include\exiv2</Filter>
+    </ClInclude>
+    <ClInclude Include="exiv2\include\exiv2\value.hpp">
+      <Filter>exiv2\include\exiv2</Filter>
+    </ClInclude>
+    <ClInclude Include="exiv2\include\exiv2\version.hpp">
+      <Filter>exiv2\include\exiv2</Filter>
+    </ClInclude>
+    <ClInclude Include="exiv2\include\exiv2\webpimage.hpp">
+      <Filter>exiv2\include\exiv2</Filter>
+    </ClInclude>
+    <ClInclude Include="exiv2\include\exiv2\xmp_exiv2.hpp">
+      <Filter>exiv2\include\exiv2</Filter>
+    </ClInclude>
+    <ClInclude Include="exiv2\include\exiv2\xmpsidecar.hpp">
+      <Filter>exiv2\include\exiv2</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="PhotoCycle.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="PhotoCycle.cpp" />
+    <ClCompile Include="TransitionManager.cpp" />
+    <ClCompile Include="ImageManager.cpp" />
+    <ClCompile Include="exiv2\src\asfvideo.cpp">
+      <Filter>exiv2\src</Filter>
+    </ClCompile>
+    <ClCompile Include="exiv2\src\basicio.cpp">
+      <Filter>exiv2\src</Filter>
+    </ClCompile>
+    <ClCompile Include="exiv2\src\bmffimage.cpp">
+      <Filter>exiv2\src</Filter>
+    </ClCompile>
+    <ClCompile Include="exiv2\src\bmpimage.cpp">
+      <Filter>exiv2\src</Filter>
+    </ClCompile>
+    <ClCompile Include="exiv2\src\canonmn_int.cpp">
+      <Filter>exiv2\src</Filter>
+    </ClCompile>
+    <ClCompile Include="exiv2\src\casiomn_int.cpp">
+      <Filter>exiv2\src</Filter>
+    </ClCompile>
+    <ClCompile Include="exiv2\src\convert.cpp">
+      <Filter>exiv2\src</Filter>
+    </ClCompile>
+    <ClCompile Include="exiv2\src\cr2header_int.cpp">
+      <Filter>exiv2\src</Filter>
+    </ClCompile>
+    <ClCompile Include="exiv2\src\cr2image.cpp">
+      <Filter>exiv2\src</Filter>
+    </ClCompile>
+    <ClCompile Include="exiv2\src\crwimage.cpp">
+      <Filter>exiv2\src</Filter>
+    </ClCompile>
+    <ClCompile Include="exiv2\src\crwimage_int.cpp">
+      <Filter>exiv2\src</Filter>
+    </ClCompile>
+    <ClCompile Include="exiv2\src\datasets.cpp">
+      <Filter>exiv2\src</Filter>
+    </ClCompile>
+    <ClCompile Include="exiv2\src\easyaccess.cpp">
+      <Filter>exiv2\src</Filter>
+    </ClCompile>
+    <ClCompile Include="exiv2\src\epsimage.cpp">
+      <Filter>exiv2\src</Filter>
+    </ClCompile>
+    <ClCompile Include="exiv2\src\error.cpp">
+      <Filter>exiv2\src</Filter>
+    </ClCompile>
+    <ClCompile Include="exiv2\src\exif.cpp">
+      <Filter>exiv2\src</Filter>
+    </ClCompile>
+    <ClCompile Include="exiv2\src\fujimn_int.cpp">
+      <Filter>exiv2\src</Filter>
+    </ClCompile>
+    <ClCompile Include="exiv2\src\futils.cpp">
+      <Filter>exiv2\src</Filter>
+    </ClCompile>
+    <ClCompile Include="exiv2\src\gifimage.cpp">
+      <Filter>exiv2\src</Filter>
+    </ClCompile>
+    <ClCompile Include="exiv2\src\helper_functions.cpp">
+      <Filter>exiv2\src</Filter>
+    </ClCompile>
+    <ClCompile Include="exiv2\src\http.cpp">
+      <Filter>exiv2\src</Filter>
+    </ClCompile>
+    <ClCompile Include="exiv2\src\image.cpp">
+      <Filter>exiv2\src</Filter>
+    </ClCompile>
+    <ClCompile Include="exiv2\src\image_int.cpp">
+      <Filter>exiv2\src</Filter>
+    </ClCompile>
+    <ClCompile Include="exiv2\src\iptc.cpp">
+      <Filter>exiv2\src</Filter>
+    </ClCompile>
+    <ClCompile Include="exiv2\src\jp2image.cpp">
+      <Filter>exiv2\src</Filter>
+    </ClCompile>
+    <ClCompile Include="exiv2\src\jp2image_int.cpp">
+      <Filter>exiv2\src</Filter>
+    </ClCompile>
+    <ClCompile Include="exiv2\src\jpgimage.cpp">
+      <Filter>exiv2\src</Filter>
+    </ClCompile>
+    <ClCompile Include="exiv2\src\makernote_int.cpp">
+      <Filter>exiv2\src</Filter>
+    </ClCompile>
+    <ClCompile Include="exiv2\src\matroskavideo.cpp">
+      <Filter>exiv2\src</Filter>
+    </ClCompile>
+    <ClCompile Include="exiv2\src\metadatum.cpp">
+      <Filter>exiv2\src</Filter>
+    </ClCompile>
+    <ClCompile Include="exiv2\src\minoltamn_int.cpp">
+      <Filter>exiv2\src</Filter>
+    </ClCompile>
+    <ClCompile Include="exiv2\src\mrwimage.cpp">
+      <Filter>exiv2\src</Filter>
+    </ClCompile>
+    <ClCompile Include="exiv2\src\nikonmn_int.cpp">
+      <Filter>exiv2\src</Filter>
+    </ClCompile>
+    <ClCompile Include="exiv2\src\olympusmn_int.cpp">
+      <Filter>exiv2\src</Filter>
+    </ClCompile>
+    <ClCompile Include="exiv2\src\orfimage.cpp">
+      <Filter>exiv2\src</Filter>
+    </ClCompile>
+    <ClCompile Include="exiv2\src\orfimage_int.cpp">
+      <Filter>exiv2\src</Filter>
+    </ClCompile>
+    <ClCompile Include="exiv2\src\panasonicmn_int.cpp">
+      <Filter>exiv2\src</Filter>
+    </ClCompile>
+    <ClCompile Include="exiv2\src\pentaxmn_int.cpp">
+      <Filter>exiv2\src</Filter>
+    </ClCompile>
+    <ClCompile Include="exiv2\src\pgfimage.cpp">
+      <Filter>exiv2\src</Filter>
+    </ClCompile>
+    <ClCompile Include="exiv2\src\photoshop.cpp">
+      <Filter>exiv2\src</Filter>
+    </ClCompile>
+    <ClCompile Include="exiv2\src\pngchunk_int.cpp">
+      <Filter>exiv2\src</Filter>
+    </ClCompile>
+    <ClCompile Include="exiv2\src\pngimage.cpp">
+      <Filter>exiv2\src</Filter>
+    </ClCompile>
+    <ClCompile Include="exiv2\src\preview.cpp">
+      <Filter>exiv2\src</Filter>
+    </ClCompile>
+    <ClCompile Include="exiv2\src\properties.cpp">
+      <Filter>exiv2\src</Filter>
+    </ClCompile>
+    <ClCompile Include="exiv2\src\psdimage.cpp">
+      <Filter>exiv2\src</Filter>
+    </ClCompile>
+    <ClCompile Include="exiv2\src\quicktimevideo.cpp">
+      <Filter>exiv2\src</Filter>
+    </ClCompile>
+    <ClCompile Include="exiv2\src\rafimage.cpp">
+      <Filter>exiv2\src</Filter>
+    </ClCompile>
+    <ClCompile Include="exiv2\src\riffvideo.cpp">
+      <Filter>exiv2\src</Filter>
+    </ClCompile>
+    <ClCompile Include="exiv2\src\rw2image.cpp">
+      <Filter>exiv2\src</Filter>
+    </ClCompile>
+    <ClCompile Include="exiv2\src\rw2image_int.cpp">
+      <Filter>exiv2\src</Filter>
+    </ClCompile>
+    <ClCompile Include="exiv2\src\samsungmn_int.cpp">
+      <Filter>exiv2\src</Filter>
+    </ClCompile>
+    <ClCompile Include="exiv2\src\sigmamn_int.cpp">
+      <Filter>exiv2\src</Filter>
+    </ClCompile>
+    <ClCompile Include="exiv2\src\sonymn_int.cpp">
+      <Filter>exiv2\src</Filter>
+    </ClCompile>
+    <ClCompile Include="exiv2\src\tags.cpp">
+      <Filter>exiv2\src</Filter>
+    </ClCompile>
+    <ClCompile Include="exiv2\src\tags_int.cpp">
+      <Filter>exiv2\src</Filter>
+    </ClCompile>
+    <ClCompile Include="exiv2\src\tgaimage.cpp">
+      <Filter>exiv2\src</Filter>
+    </ClCompile>
+    <ClCompile Include="exiv2\src\tiffcomposite_int.cpp">
+      <Filter>exiv2\src</Filter>
+    </ClCompile>
+    <ClCompile Include="exiv2\src\tiffimage.cpp">
+      <Filter>exiv2\src</Filter>
+    </ClCompile>
+    <ClCompile Include="exiv2\src\tiffimage_int.cpp">
+      <Filter>exiv2\src</Filter>
+    </ClCompile>
+    <ClCompile Include="exiv2\src\tiffvisitor_int.cpp">
+      <Filter>exiv2\src</Filter>
+    </ClCompile>
+    <ClCompile Include="exiv2\src\types.cpp">
+      <Filter>exiv2\src</Filter>
+    </ClCompile>
+    <ClCompile Include="exiv2\src\utils.cpp">
+      <Filter>exiv2\src</Filter>
+    </ClCompile>
+    <ClCompile Include="exiv2\src\value.cpp">
+      <Filter>exiv2\src</Filter>
+    </ClCompile>
+    <ClCompile Include="exiv2\src\version.cpp">
+      <Filter>exiv2\src</Filter>
+    </ClCompile>
+    <ClCompile Include="exiv2\src\webpimage.cpp">
+      <Filter>exiv2\src</Filter>
+    </ClCompile>
+    <ClCompile Include="exiv2\src\xmp.cpp">
+      <Filter>exiv2\src</Filter>
+    </ClCompile>
+    <ClCompile Include="exiv2\src\xmpsidecar.cpp">
+      <Filter>exiv2\src</Filter>
+    </ClCompile>
+    <ClCompile Include="zlib\inflate.c">
+      <Filter>zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="zlib\inftrees.c">
+      <Filter>zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="zlib\trees.c">
+      <Filter>zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="zlib\adler32.c">
+      <Filter>zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="zlib\compress.c">
+      <Filter>zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="zlib\crc32.c">
+      <Filter>zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="zlib\deflate.c">
+      <Filter>zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="zlib\gzclose.c">
+      <Filter>zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="zlib\gzlib.c">
+      <Filter>zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="zlib\gzread.c">
+      <Filter>zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="zlib\gzwrite.c">
+      <Filter>zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="zlib\infback.c">
+      <Filter>zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="zlib\inffast.c">
+      <Filter>zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="zlib\zutil.c">
+      <Filter>zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="zlib\uncompr.c">
+      <Filter>zlib</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="PhotoCycle.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="config.ini" />
+    <None Include="exiv2\src\TODO">
+      <Filter>exiv2\src</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="exiv2">
+      <UniqueIdentifier>{11313e57-2365-4459-8c81-d7b7760e444a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="exiv2\include">
+      <UniqueIdentifier>{1a2b8a00-f21c-468d-90bf-ec80df46923f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="exiv2\src">
+      <UniqueIdentifier>{d478f2ca-b43f-46a7-9b69-74267f372850}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="zlib">
+      <UniqueIdentifier>{060559bb-bb29-4bbf-89eb-d0566ff1d1b9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="exiv2\include\exiv2">
+      <UniqueIdentifier>{f3ee4deb-a868-48db-a74d-04ee6d4e8484}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
