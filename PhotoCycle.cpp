@@ -189,20 +189,21 @@ void Sprite::OnLoad()
 	if (panScanMod <= 0)
 	{
 		ZoomStart = ZoomEnd = 1;
+		PanXStart = PanXEnd = PanYStart = PanYEnd = 0;
 	}
 	else
 	{
 		ZoomStart = 1, ZoomEnd = 1.1f + ((rand() % panScanMod) / 10000.0f); // 1.000 to 1.50
 		if (rand() % 2) { std::swap(ZoomStart, ZoomEnd); }
+
+		float panRangeStart = (ZoomStart - 1.0f) / ZoomStart;
+		float panRangeEnd = (ZoomEnd - 1.0f) / ZoomEnd;
+
+		PanXStart = ((rand() % 1000) / 1000.0f - 0.5f) * 2 * panRangeStart;
+		PanXEnd = ((rand() % 1000) / 1000.0f - 0.5f) * 2 * panRangeEnd;
+		PanYStart = ((rand() % 1000) / 1000.0f - 0.5f) * 2 * panRangeStart;
+		PanYEnd = ((rand() % 1000) / 1000.0f - 0.5f) * 2 * panRangeEnd;
 	}
-
-	float panRangeStart = (ZoomStart - 1.0f) / ZoomStart;
-	float panRangeEnd = (ZoomEnd - 1.0f) / ZoomEnd;
-
-	PanXStart = ((rand() % 1000) / 1000.0f - 0.5f) * 2 * panRangeStart;
-	PanXEnd = ((rand() % 1000) / 1000.0f - 0.5f) * 2 * panRangeEnd;
-	PanYStart = ((rand() % 1000) / 1000.0f - 0.5f) * 2 * panRangeStart;
-	PanYEnd = ((rand() % 1000) / 1000.0f - 0.5f) * 2 * panRangeEnd;
 
 	PanScanProgress = 0.0f;
 }
@@ -388,7 +389,7 @@ HRESULT App::Initialize(HINSTANCE hInstance, const std::wstring& cmd) {
 				screen.GetMaximizedRect();
 				screen.m_hwnd = CreateWindow(
 					windowClassName,
-					L"Texture Cycler",
+					L"Photo Cycler",
 					FULLSCREEN_STYLE,
 					screen.m_MaximizedRect.left, screen.m_MaximizedRect.top,
 					screen.m_MaximizedRect.right, screen.m_MaximizedRect.bottom,
@@ -1047,18 +1048,17 @@ HRESULT App::LoadBitmapFromFile(
 }
 
 void App::RunMessageLoop() {
-	// Target frame time for 60 FPS (in milliseconds)
-	const DWORD targetFrameTime = 1000 / 60;
+	const auto targetFrameTime = std::chrono::milliseconds(1000 / 60);
 
-	MSG msg;
-	DWORD previousFrameStart;
-	DWORD frameStart = GetTickCount();
+	auto frameStart = std::chrono::steady_clock::now();
+	auto previousFrameStart = frameStart;
 	bool isRunning = true;
 
+	MSG msg;
 	while (isRunning) {
 		previousFrameStart = frameStart;
 		// Record the start time of this frame
-		frameStart = GetTickCount();
+		frameStart = std::chrono::steady_clock::now();
 
 		// Process all pending Windows messages
 		while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) {
@@ -1077,18 +1077,18 @@ void App::RunMessageLoop() {
 		}
 
 		// Update game state
-		auto deltaTime = (frameStart - previousFrameStart) / 1000.f;
+		auto deltaTime = std::chrono::duration_cast<std::chrono::milliseconds>(frameStart - previousFrameStart).count() / 1000.f;
 		Update(deltaTime);
 
 		OnRender();
 
 		// Calculate how long this frame took
-		auto frameTime = GetTickCount() - frameStart;
+		auto frameTime = std::chrono::steady_clock::now() - frameStart;
 
 		// Sleep if we have time remaining to maintain 60 FPS
 		if (frameTime < targetFrameTime) {
 			auto sleepTime = targetFrameTime - frameTime;
-			Sleep(sleepTime);
+			Sleep((DWORD)std::chrono::duration_cast<std::chrono::milliseconds>(sleepTime).count());
 		}
 	}
 }
