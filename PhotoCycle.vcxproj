@@ -333,6 +333,8 @@
     <ResourceCompile Include="PhotoCycle.rc" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="icon.ico" />
+    <Image Include="logo.jpg" />
     <Image Include="PhotoCycle.ico" />
   </ItemGroup>
   <ItemGroup>

@@ -41,6 +41,8 @@
 using mode_t = unsigned short;
 #include <io.h>
 #include <windows.h>
+#undef min
+#undef max
 #endif
 
 #if __has_include(<filesystem>)

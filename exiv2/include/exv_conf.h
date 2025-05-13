@@ -3,11 +3,14 @@
 #ifndef _EXV_CONF_H_
 #define _EXV_CONF_H_
 
+#define EXV_ENABLE_FILESYSTEM
+
 // Define to 1 if you want to use libcurl in httpIO.
 //#define EXV_USE_CURL
 
+
 // Define if you require webready support.
-#define EXV_ENABLE_WEBREADY
+//#define EXV_ENABLE_WEBREADY
 
 // Define if you require PNG support.
 #define EXIV2_ENABLE_PNG

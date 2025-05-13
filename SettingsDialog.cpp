@@ -91,32 +91,25 @@ void SettingsDialog::Show()
 	GdiplusShutdown(g_GdiplusToken);
 }
 
-void LoadAndScaleImageToFitDialog(HWND hDlg, const WCHAR* filename)
+void LoadAndScaleImageToFitDialog(HWND hDlg)
 {
 	std::unique_ptr<Gdiplus::Bitmap> source;
-	//bool fromRes = false;
-	//if (fromRes)
 	{
-		HRSRC hRes = FindResource(nullptr, MAKEINTRESOURCE(IDR_MY_IMAGE), L"JPG");
+		HRSRC hRes = FindResource(nullptr, MAKEINTRESOURCE(IDR_MY_IMAGE), RT_RCDATA);
 		DWORD dwSize = SizeofResource(nullptr, hRes);
 		HGLOBAL hResData = LoadResource(nullptr, hRes);
 		void* pData = LockResource(hResData);
-		IStream* pStream = nullptr;
-		HGLOBAL hMem = GlobalAlloc(GMEM_MOVEABLE, dwSize);
-		memcpy(GlobalLock(hMem), pData, dwSize);
-		GlobalUnlock(hMem);
-		HRESULT hr = CreateStreamOnHGlobal(hMem, TRUE, &pStream);
-		LARGE_INTEGER zero = {};
-		pStream->Seek(zero, STREAM_SEEK_SET, nullptr);
-		source.reset(Gdiplus::Bitmap::FromStream(pStream));
-		pStream->Release();
-		GlobalFree(hMem);
+		WCHAR tempPath[MAX_PATH];
+		GetTempPathW(MAX_PATH, tempPath);
+		std::wstring tempFile = std::wstring(tempPath) + L"photo_cycle_logo__temp.jpg";
+		FILE* f = nullptr;
+		errno_t err = _wfopen_s(&f, tempFile.c_str(), L"wb");
+		fwrite(pData, 1, dwSize, f);
+		fclose(f);
+		source.reset(Gdiplus::Bitmap::FromFile(tempFile.c_str()));
+		DeleteFileW(tempFile.c_str());
 	}
-	//else
-	//{
-	//	source.reset(Gdiplus::Bitmap::FromFile(filename));
-	//}
-
+	
 	RECT rect;
 	GetClientRect(hDlg, &rect);
 
@@ -251,7 +244,11 @@ INT_PTR CALLBACK SettingsDialog::SettingsDlgProc(HWND hDlg, UINT message, WPARAM
 			SendDlgItemMessageW(hDlg, IDC_EXCLUDE_LIST, LB_ADDSTRING, 0, (LPARAM)path.c_str());
 		}
 
-		LoadAndScaleImageToFitDialog(hDlg, L"logo.jpg");
+		LoadAndScaleImageToFitDialog(hDlg);
+
+		//HICON hIcon = (HICON)LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_PHOTOCYCLE), IMAGE_ICON, 0, 0, LR_DEFAULTCOLOR);
+		//SendMessage(hDlg, WM_SETICON, ICON_BIG, (LPARAM)hIcon);
+		//SendMessage(hDlg, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);
 
 		return TRUE;
 	}

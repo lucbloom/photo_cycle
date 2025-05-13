@@ -278,6 +278,8 @@
   </ItemGroup>
   <ItemGroup>
     <Image Include="PhotoCycle.ico" />
+    <Image Include="icon.ico" />
+    <Image Include="logo.jpg" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="PhotoCycle.cpp" />

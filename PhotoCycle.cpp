@@ -103,12 +103,13 @@ public:
 	void LoadSprite(Sprite* sprite);
 	void DrawSprite(Sprite* sprite);
 	HRESULT OnRender();
-	void RenderText(const std::wstring& caption, float x, float y, float w, float h);
+	void RenderText(const std::wstring& caption, float alpha, float x, float y, float w, float h);
 	void OnResize(UINT width, UINT height);
 	RECT GetMaximizedRect();
 	void Update(float deltaTime);
 	void StartSwap(bool animate, int offset);
 	void EndFade();
+	void DrawHackOutline(float x, float y, float xo, float yo);
 };
 
 class App
@@ -135,7 +136,7 @@ public:
 	SettingsDialog settings;
 
 	bool m_IsPreview = false;
-	bool m_IsSettings = false;
+	bool m_IsConfigDialogMode = false;
 
 	App() { instance = this; }
 	~App();
@@ -269,11 +270,15 @@ HRESULT App::Initialize(HINSTANCE hInstance, const std::wstring& cmd) {
 	if (pPos == std::string::npos) { pPos = cmd.find(L"/P"); }
 	m_IsPreview = (pPos != std::string::npos);
 
-	pPos = cmd.find(L"/s");
-	if (pPos == std::string::npos) { pPos = cmd.find(L"/S"); }
-	m_IsSettings = (pPos != std::string::npos) || true;
+	pPos = cmd.find(L"/c");
+	if (pPos == std::string::npos) { pPos = cmd.find(L"/C"); }
+	m_IsConfigDialogMode = (pPos != std::string::npos);
 
-	if (m_IsSettings)
+	//pPos = cmd.find(L"/s");
+	//if (pPos == std::string::npos) { pPos = cmd.find(L"/S"); }
+	//bool startFullscreen = (pPos != std::string::npos);
+
+	if (m_IsConfigDialogMode)
 	{
 		settings.Show();
 		PostQuitMessage(0);
@@ -383,6 +388,11 @@ HRESULT App::Initialize(HINSTANCE hInstance, const std::wstring& cmd) {
 
 		screen.StartSwap(false, 1);
 	}
+
+	//if (!startFullscreen)
+	//{
+	//	SetFullscreen(false);
+	//}
 
 	return S_OK;
 }
@@ -608,78 +618,95 @@ void ScreenSaverWindow::DrawSprite(Sprite* sprite) {
 		D2D1_BITMAP_INTERPOLATION_MODE_LINEAR
 	);
 
-	if (App::instance->settings.RenderText)
-	{
-		RenderText(sprite->imageInfo->folderName, 100, 100, (float)screenWidth, 200);
-	}
+	//if (App::instance->settings.RenderText)
+	//{
+	//	RenderText(sprite->imageInfo->folderName, sprite->alpha, 100, 100, (float)screenWidth, 200);
+	//}
 }
 
-void ScreenSaverWindow::RenderText(const std::wstring& caption, float x, float y, float w, float h)
+void ScreenSaverWindow::DrawHackOutline(float x, float y, float xo, float yo)
 {
-	if (w <= 0 || h <= 0)
+	m_pRenderTarget->DrawTextLayout(
+		D2D1::Point2F(x + xo, y + yo),
+		m_pTextLayout.Get(),
+		m_pTextOutlineBrush.Get(),
+		D2D1_DRAW_TEXT_OPTIONS_NO_SNAP
+	);
+}
+
+void ScreenSaverWindow::RenderText(const std::wstring& caption, float alpha, float x, float y, float w, float h)
+{
+	if (w <= 0 || h <= 0 || alpha <= 0)
 	{
 		return;
 	}
 
-	ComPtr<IDWriteFontCollection> pFontCollection;
-	ComPtr<IDWriteFont> pFont;
-	ComPtr<IDWriteFontFace> pFontFace;
-	ComPtr<IDWriteFontFamily> pFontFamily;
-	if (SUCCEEDED(App::instance->m_pDWriteFactory->GetSystemFontCollection(&pFontCollection))) {
-		if (SUCCEEDED(pFontCollection->GetFontFamily(0, &pFontFamily))) {
-			if (SUCCEEDED(pFontFamily->GetFont(0, &pFont))) {
-				pFont->CreateFontFace(&pFontFace);
-			}
-		}
-	}
-	pFont->CreateFontFace(&pFontFace);
+	// OUTLINE (WIP) ComPtr<IDWriteFontCollection> pFontCollection;
+	// OUTLINE (WIP) ComPtr<IDWriteFont> pFont;
+	// OUTLINE (WIP) ComPtr<IDWriteFontFace> pFontFace;
+	// OUTLINE (WIP) ComPtr<IDWriteFontFamily> pFontFamily;
+	// OUTLINE (WIP) if (SUCCEEDED(App::instance->m_pDWriteFactory->GetSystemFontCollection(&pFontCollection))) {
+	// OUTLINE (WIP) 	if (SUCCEEDED(pFontCollection->GetFontFamily(0, &pFontFamily))) {
+	// OUTLINE (WIP) 		if (SUCCEEDED(pFontFamily->GetFont(0, &pFont))) {
+	// OUTLINE (WIP) 			pFont->CreateFontFace(&pFontFace);
+	// OUTLINE (WIP) 		}
+	// OUTLINE (WIP) 	}
+	// OUTLINE (WIP) }
+	// OUTLINE (WIP) pFont->CreateFontFace(&pFontFace);
+	// OUTLINE (WIP) 
+	// OUTLINE (WIP) // Convert Unicode characters to glyph indices
+	// OUTLINE (WIP) std::vector<UINT32> unicodeCodePoints(caption.length());
+	// OUTLINE (WIP) for (int i = 0; i < caption.length(); ++i) {
+	// OUTLINE (WIP) 	unicodeCodePoints.push_back(caption[i]);
+	// OUTLINE (WIP) }
+	// OUTLINE (WIP) std::vector<UINT16> glyphIndices(unicodeCodePoints.size());
+	// OUTLINE (WIP) pFontFace->GetGlyphIndices(unicodeCodePoints.data(), (UINT32)unicodeCodePoints.size(), glyphIndices.data());
+	// OUTLINE (WIP) FLOAT dpiX, dpiY;
+	// OUTLINE (WIP) m_pRenderTarget->GetDpi(&dpiX, &dpiY);
+	// OUTLINE (WIP) float pixelsPerDip = dpiX / 96.0f; // Convert DPI to pixels per DIP
+	// OUTLINE (WIP) 
+	// OUTLINE (WIP) DWRITE_FONT_METRICS fontMetrics;
+	// OUTLINE (WIP) pFontFace->GetGdiCompatibleMetrics(App::instance->settings.FontSize, pixelsPerDip, nullptr, &fontMetrics);
+	// OUTLINE (WIP) 
+	// OUTLINE (WIP) std::vector<DWRITE_GLYPH_METRICS> glyphMetrics(glyphIndices.size());
+	// OUTLINE (WIP) HRESULT hr = pFontFace->GetGdiCompatibleGlyphMetrics(App::instance->settings.FontSize, pixelsPerDip, nullptr, FALSE, glyphIndices.data(), (UINT32)glyphIndices.size(), glyphMetrics.data());
+	// OUTLINE (WIP) 
+	// OUTLINE (WIP) // Convert advance widths
+	// OUTLINE (WIP) std::vector<FLOAT> glyphAdvances(glyphIndices.size());
+	// OUTLINE (WIP) for (size_t i = 0; i < glyphIndices.size(); ++i) {
+	// OUTLINE (WIP) 	glyphAdvances[i] = static_cast<FLOAT>(glyphMetrics[i].advanceWidth) / fontMetrics.designUnitsPerEm * App::instance->settings.FontSize - App::instance->settings.OutlineWidth;
+	// OUTLINE (WIP) }
+	// OUTLINE (WIP) 
+	// OUTLINE (WIP) float advW = 0;
+	// OUTLINE (WIP) for (float adv : glyphAdvances) { advW += adv; }
+	// OUTLINE (WIP) 
+	// OUTLINE (WIP) // Generate outline from glyph run
+	// OUTLINE (WIP) ComPtr<ID2D1PathGeometry> pPathGeometry;
+	// OUTLINE (WIP) ComPtr<ID2D1GeometrySink> pSink;
+	// OUTLINE (WIP) App::instance->m_pD2DFactory->CreatePathGeometry(&pPathGeometry);
+	// OUTLINE (WIP) pPathGeometry->Open(&pSink);
+	// OUTLINE (WIP) 
+	// OUTLINE (WIP) std::vector<DWRITE_GLYPH_OFFSET> glyphOffsets(glyphIndices.size());
+	// OUTLINE (WIP) pFontFace->GetGlyphRunOutline(App::instance->settings.FontSize, glyphIndices.data(), glyphAdvances.data(), glyphOffsets.data(), (UINT32)glyphIndices.size(), FALSE, FALSE, pSink.Get());
+	// OUTLINE (WIP) 
+	// OUTLINE (WIP) pSink->Close();
+	// OUTLINE (WIP) 
+	// OUTLINE (WIP) RECT screenRect;
+	// OUTLINE (WIP) GetClientRect(m_hwnd, &screenRect);
+	// OUTLINE (WIP) auto screenWidth = screenRect.right - screenRect.left;
+	// OUTLINE (WIP) auto screenHeight = screenRect.bottom - screenRect.top;
+	// OUTLINE (WIP) 
+	// OUTLINE (WIP) D2D1_MATRIX_3X2_F transform = D2D1::Matrix3x2F::Translation(-advW / 2, y + h);
+	// OUTLINE (WIP) ComPtr<ID2D1TransformedGeometry> pTransformedGeometry;
+	// OUTLINE (WIP) App::instance->m_pD2DFactory->CreateTransformedGeometry(pPathGeometry.Get(), &transform, &pTransformedGeometry);
+	// OUTLINE (WIP) m_pRenderTarget->DrawGeometry(pTransformedGeometry.Get(), m_pTextOutlineBrush.Get(), App::instance->settings.OutlineWidth);
 
-	// Convert Unicode characters to glyph indices
-	std::vector<UINT32> unicodeCodePoints(caption.length());
-	for (int i = 0; i < caption.length(); ++i) {
-		unicodeCodePoints.push_back(caption[i]);
-	}
-	std::vector<UINT16> glyphIndices(unicodeCodePoints.size());
-	pFontFace->GetGlyphIndices(unicodeCodePoints.data(), (UINT32)unicodeCodePoints.size(), glyphIndices.data());
-	FLOAT dpiX, dpiY;
-	m_pRenderTarget->GetDpi(&dpiX, &dpiY);
-	float pixelsPerDip = dpiX / 96.0f; // Convert DPI to pixels per DIP
-
-	DWRITE_FONT_METRICS fontMetrics;
-	pFontFace->GetGdiCompatibleMetrics(App::instance->settings.FontSize, pixelsPerDip, nullptr, &fontMetrics);
-
-	std::vector<DWRITE_GLYPH_METRICS> glyphMetrics(glyphIndices.size());
-	HRESULT hr = pFontFace->GetGdiCompatibleGlyphMetrics(App::instance->settings.FontSize, pixelsPerDip, nullptr, FALSE, glyphIndices.data(), (UINT32)glyphIndices.size(), glyphMetrics.data());
-
-	// Convert advance widths
-	std::vector<FLOAT> glyphAdvances(glyphIndices.size());
-	for (size_t i = 0; i < glyphIndices.size(); ++i) {
-		glyphAdvances[i] = static_cast<FLOAT>(glyphMetrics[i].advanceWidth) / fontMetrics.designUnitsPerEm * App::instance->settings.FontSize - App::instance->settings.OutlineWidth;
-	}
-
-	float advW = 0;
-	for (float adv : glyphAdvances) { advW += adv; }
-
-	// Generate outline from glyph run
-	ComPtr<ID2D1PathGeometry> pPathGeometry;
-	ComPtr<ID2D1GeometrySink> pSink;
-	App::instance->m_pD2DFactory->CreatePathGeometry(&pPathGeometry);
-	pPathGeometry->Open(&pSink);
-
-	std::vector<DWRITE_GLYPH_OFFSET> glyphOffsets(glyphIndices.size());
-	pFontFace->GetGlyphRunOutline(App::instance->settings.FontSize, glyphIndices.data(), glyphAdvances.data(), glyphOffsets.data(), (UINT32)glyphIndices.size(), FALSE, FALSE, pSink.Get());
-
-	pSink->Close();
-
-	RECT screenRect;
-	GetClientRect(m_hwnd, &screenRect);
-	auto screenWidth = screenRect.right - screenRect.left;
-	auto screenHeight = screenRect.bottom - screenRect.top;
-
-	D2D1_MATRIX_3X2_F transform = D2D1::Matrix3x2F::Translation(-advW / 2, y + h);
-	ComPtr<ID2D1TransformedGeometry> pTransformedGeometry;
-	App::instance->m_pD2DFactory->CreateTransformedGeometry(pPathGeometry.Get(), &transform, &pTransformedGeometry);
-	m_pRenderTarget->DrawGeometry(pTransformedGeometry.Get(), m_pTextOutlineBrush.Get(), App::instance->settings.OutlineWidth);
+	auto c = App::instance->settings.TextColor;
+	float red = ((c >> 16) & 0xFF) / 255.0f;
+	float green = ((c >> 8) & 0xFF) / 255.0f;
+	float blue = (c & 0xFF) / 255.0f;
+	m_pTextFillBrush->SetColor(D2D1::ColorF(red, green, blue, alpha));
+	m_pTextOutlineBrush->SetColor(D2D1::ColorF(0, 0, 0, alpha));
 
 	App::instance->m_pDWriteFactory->CreateTextLayout(
 		caption.c_str(),
@@ -688,6 +715,20 @@ void ScreenSaverWindow::RenderText(const std::wstring& caption, float x, float y
 		w, h,
 		m_pTextLayout.GetAddressOf()
 	);
+
+	// HACK outline
+	{
+		float o = 2;// App::instance->settings.OutlineWidth;
+		float oo = o * 1.1f;
+		DrawHackOutline(x, y, -o, -o);
+		DrawHackOutline(x, y, o, -o);
+		DrawHackOutline(x, y, -o, o);
+		DrawHackOutline(x, y, o, o);
+		DrawHackOutline(x, y, -oo, 0);
+		DrawHackOutline(x, y, oo, 0);
+		DrawHackOutline(x, y, 0, -oo);
+		DrawHackOutline(x, y, 0, oo);
+	}
 
 	m_pRenderTarget->DrawTextLayout(
 		D2D1::Point2F(x, y),
@@ -729,7 +770,13 @@ HRESULT ScreenSaverWindow::OnRender()
 	{
 		if (m_CurrentSprite && m_CurrentSprite->imageInfo)
 		{
-			RenderText(L"......You cna see me! " + m_CurrentSprite->imageInfo->filePath, 20, 20, rtSize.width - 20 * 2, rtSize.height - 20);
+			auto caption = m_CurrentSprite->imageInfo->folderName;
+			if (m_CurrentSprite->imageInfo->dateTaken.length() > 1)
+			{
+				caption += L" " + m_CurrentSprite->imageInfo->dateTaken;
+			}
+			auto alpha = m_NextSprite->bitmap ? 1 - m_NextSprite->alpha : 1;
+			RenderText(caption, alpha, 20, 20, rtSize.width - 20 * 2, rtSize.height - 20);
 		}
 	}
 
