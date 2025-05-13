@@ -7,9 +7,9 @@
 #include <dwrite.h>
 #include <wincodec.h>
 #include <wrl/client.h>
-#include <shlobj.h>
 
 #include "ImageFileNameLibrary.h"
+#include "SettingsDialog.h"
 
 #pragma comment(lib, "d2d1.lib")
 #pragma comment(lib, "dwrite.lib")
@@ -61,7 +61,7 @@ class Sprite
 public:
 	ComPtr<ID2D1Bitmap> bitmap;
 	D2D1_SIZE_F originalSize;
-	const ImageInfo* imageInfo;
+	ImageInfo* imageInfo;
 
 	float x;
 	float y;
@@ -132,20 +132,10 @@ public:
 
 	float m_DisplayTimer = 0;
 
-	float m_FadeDuration = 0.5f;
-	float m_DisplayDuration = 3;
-	bool m_RenderText = true;
-	std::wstring m_TextFontName = L"Segoe UI";
-	UINT32 m_TextColor = 0xffffff;
-	UINT32 m_BackgroundColor = 0x00000000;
-	float m_FontSize = 48;
-	float m_OutlineWidth = 5;
-	bool m_SyncChange = false;
-	bool m_SingleScreen = false;
-	float m_PanScanFactor = 1;
-	DWRITE_FONT_WEIGHT m_FontWeight = DWRITE_FONT_WEIGHT_BOLD;
+	SettingsDialog settings;
 
 	bool m_IsPreview = false;
+	bool m_IsSettings = false;
 
 	App() { instance = this; }
 	~App();
@@ -185,7 +175,7 @@ void Sprite::OnLoad()
 {
 	originalSize = bitmap->GetSize();
 
-	int panScanMod = (int)(1000 * App::instance->m_PanScanFactor);
+	int panScanMod = (int)(1000 * App::instance->settings.PanScanFactor);
 	if (panScanMod <= 0)
 	{
 		ZoomStart = ZoomEnd = 1;
@@ -241,7 +231,7 @@ HRESULT ScreenSaverWindow::CreateDeviceResources() {
 
 			// Create a solid color brush for text
 			hr = m_pRenderTarget->CreateSolidColorBrush(
-				D2D1::ColorF(App::instance->m_TextColor),
+				D2D1::ColorF(App::instance->settings.TextColor),
 				m_pTextFillBrush.GetAddressOf()
 			);
 		}
@@ -271,52 +261,32 @@ void ScreenSaverWindow::LoadCurrentSprite()
 	LoadSprite(m_CurrentSprite);
 }
 
-std::wstring EnsureIniFileExists(bool create);
-void WriteInt(LPCWSTR section, LPCWSTR key, int value);
-void WriteBool(LPCWSTR section, LPCWSTR key, bool value);
-void WriteList(LPCWSTR section, LPCWSTR key, const std::vector<std::wstring>& list, wchar_t delimiter = L',');
-int ReadInt(LPCWSTR section, LPCWSTR key, int defaultValue);
-UINT32 ReadColor(LPCWSTR section, LPCWSTR key, UINT32 defaultValue);
-float ReadFloat(LPCWSTR section, LPCWSTR key, float defaultValue);
-bool ReadBool(LPCWSTR section, LPCWSTR key, bool defaultValue);
-std::wstring ReadString(LPCWSTR section, LPCWSTR key, LPCWSTR defaultValue);
-std::vector<std::wstring> SplitList(const std::wstring& str, wchar_t delimiter = L',');
-std::vector<std::wstring> ReadList(LPCWSTR section, LPCWSTR key);
-
-static const wchar_t* INI_SETTINGS = L"Settings";
-static const wchar_t* INI_RENDER_TEXT = L"RenderText";
-
 #define FULLSCREEN_STYLE WS_POPUP
 
 HRESULT App::Initialize(HINSTANCE hInstance, const std::wstring& cmd) {
-	auto include = ReadList(L"Images", L"Include");
-	auto exclude = ReadList(L"Images", L"Exclude");
-	if (include.empty())
-	{
-		include.push_back(L"C:\\Users\\lucbl\\Pictures\\Personal");
-	}
-	m_Library.SetPaths(include, exclude);
 
-	m_FadeDuration = ReadFloat(INI_SETTINGS, L"FadeDuration", m_FadeDuration);
-	m_DisplayDuration = ReadFloat(INI_SETTINGS, L"DisplayDuration", m_DisplayDuration);
-	m_FontSize = ReadFloat(INI_SETTINGS, L"FontSize", m_FontSize);
-	m_OutlineWidth = ReadFloat(INI_SETTINGS, L"Outline", m_OutlineWidth);
-	m_SyncChange = ReadBool(INI_SETTINGS, L"SyncChange", m_SyncChange);
-	m_SingleScreen = ReadBool(INI_SETTINGS, L"SingleScreen", m_SingleScreen);
-	m_PanScanFactor = ReadFloat(INI_SETTINGS, L"PanScanFactor", m_PanScanFactor);
-	m_RenderText = ReadBool(INI_SETTINGS, INI_RENDER_TEXT, m_RenderText);
-	m_TextFontName = ReadString(INI_SETTINGS, L"Font", m_TextFontName.c_str());
-	m_TextColor = ReadColor(INI_SETTINGS, L"FontColor", m_TextColor);
-	m_BackgroundColor = ReadColor(INI_SETTINGS, L"BackgroundColor", m_BackgroundColor);
+	size_t pPos = cmd.find(L"/p");
+	if (pPos == std::string::npos) { pPos = cmd.find(L"/P"); }
+	m_IsPreview = (pPos != std::string::npos);
+
+	pPos = cmd.find(L"/s");
+	if (pPos == std::string::npos) { pPos = cmd.find(L"/S"); }
+	m_IsSettings = (pPos != std::string::npos) || true;
+
+	if (m_IsSettings)
+	{
+		settings.Show();
+		PostQuitMessage(0);
+		return 0;
+	}
+
+	m_Library.SetPaths(settings.IncludePaths, settings.ExcludePaths);
 
 	HRESULT hr = CreateDeviceIndependentResources();
 	if (FAILED(hr)) {
 		return hr;
 	}
 
-	size_t pPos = cmd.find(L"/p");
-	if (pPos == std::string::npos) { pPos = cmd.find(L"/P"); }
-	m_IsPreview = (pPos != std::string::npos);
 	if (m_IsPreview) {
 		auto hwndStr = cmd.c_str() + pPos + 3;  // Skip over "/p "
 		m_Screensavers.resize(1);
@@ -376,7 +346,7 @@ HRESULT App::Initialize(HINSTANCE hInstance, const std::wstring& cmd) {
 		DISPLAY_DEVICE dd;
 		dd.cb = sizeof(dd);
 		for (int i = 0; EnumDisplayDevices(NULL, i, &dd, 0); ++i) {
-			if (m_SingleScreen && !(dd.StateFlags & DISPLAY_DEVICE_PRIMARY_DEVICE)) {
+			if (settings.SingleScreen && !(dd.StateFlags & DISPLAY_DEVICE_PRIMARY_DEVICE)) {
 				continue;
 			}
 
@@ -461,12 +431,12 @@ HRESULT App::CreateDeviceIndependentResources() {
 
 	if (SUCCEEDED(hr)) {
 		hr = m_pDWriteFactory->CreateTextFormat(
-			m_TextFontName.c_str(),
+			settings.TextFontName.c_str(),
 			nullptr,
-			m_FontWeight,
+			settings.FontWeight,
 			DWRITE_FONT_STYLE_NORMAL,
 			DWRITE_FONT_STRETCH_NORMAL,
-			m_FontSize,
+			settings.FontSize,
 			L"en-us",
 			m_pTextFormat.GetAddressOf()
 		);
@@ -484,6 +454,8 @@ void ScreenSaverWindow::LoadSprite(Sprite* sprite)
 		sprite->bitmap.Reset();
 		return;
 	}
+
+	sprite->imageInfo->CacheInfo();
 
 	auto hr = LoadBitmapFromFileWithTransparencyMixedToBlack(sprite);
 	if (SUCCEEDED(hr)) {
@@ -550,7 +522,7 @@ HRESULT ScreenSaverWindow::LoadBitmapFromFileWithTransparencyMixedToBlack(Sprite
 	hr = pConverter->CopyPixels(nullptr, stride, static_cast<UINT>(pixelData.size()), pixelData.data());
 	if (FAILED(hr)) return hr;
 
-	auto bgc = App::instance->m_BackgroundColor;
+	auto bgc = App::instance->settings.BackgroundColor;
 	const BYTE bgColor[3] = { (BYTE)bgc, (BYTE)(bgc >> 8), (BYTE)(bgc >> 16) };
 
 	// Modify the pixel data to blend with black
@@ -607,8 +579,8 @@ void ScreenSaverWindow::DrawSprite(Sprite* sprite) {
 		(screenRect.bottom - screenRect.top) / imgHeight
 	);
 
-	float totalDislayTime = App::instance->m_DisplayDuration;
-	if (!App::instance->m_SyncChange)
+	float totalDislayTime = App::instance->settings.DisplayDuration;
+	if (!App::instance->settings.SyncChange)
 	{
 		totalDislayTime *= App::instance->m_Screensavers.size();
 	}
@@ -636,7 +608,7 @@ void ScreenSaverWindow::DrawSprite(Sprite* sprite) {
 		D2D1_BITMAP_INTERPOLATION_MODE_LINEAR
 	);
 
-	if (App::instance->m_RenderText)
+	if (App::instance->settings.RenderText)
 	{
 		RenderText(sprite->imageInfo->folderName, 100, 100, (float)screenWidth, 200);
 	}
@@ -674,15 +646,15 @@ void ScreenSaverWindow::RenderText(const std::wstring& caption, float x, float y
 	float pixelsPerDip = dpiX / 96.0f; // Convert DPI to pixels per DIP
 
 	DWRITE_FONT_METRICS fontMetrics;
-	pFontFace->GetGdiCompatibleMetrics(App::instance->m_FontSize, pixelsPerDip, nullptr, &fontMetrics);
+	pFontFace->GetGdiCompatibleMetrics(App::instance->settings.FontSize, pixelsPerDip, nullptr, &fontMetrics);
 
 	std::vector<DWRITE_GLYPH_METRICS> glyphMetrics(glyphIndices.size());
-	HRESULT hr = pFontFace->GetGdiCompatibleGlyphMetrics(App::instance->m_FontSize, pixelsPerDip, nullptr, FALSE, glyphIndices.data(), (UINT32)glyphIndices.size(), glyphMetrics.data());
+	HRESULT hr = pFontFace->GetGdiCompatibleGlyphMetrics(App::instance->settings.FontSize, pixelsPerDip, nullptr, FALSE, glyphIndices.data(), (UINT32)glyphIndices.size(), glyphMetrics.data());
 
 	// Convert advance widths
 	std::vector<FLOAT> glyphAdvances(glyphIndices.size());
 	for (size_t i = 0; i < glyphIndices.size(); ++i) {
-		glyphAdvances[i] = static_cast<FLOAT>(glyphMetrics[i].advanceWidth) / fontMetrics.designUnitsPerEm * App::instance->m_FontSize - App::instance->m_OutlineWidth;
+		glyphAdvances[i] = static_cast<FLOAT>(glyphMetrics[i].advanceWidth) / fontMetrics.designUnitsPerEm * App::instance->settings.FontSize - App::instance->settings.OutlineWidth;
 	}
 
 	float advW = 0;
@@ -695,7 +667,7 @@ void ScreenSaverWindow::RenderText(const std::wstring& caption, float x, float y
 	pPathGeometry->Open(&pSink);
 
 	std::vector<DWRITE_GLYPH_OFFSET> glyphOffsets(glyphIndices.size());
-	pFontFace->GetGlyphRunOutline(App::instance->m_FontSize, glyphIndices.data(), glyphAdvances.data(), glyphOffsets.data(), (UINT32)glyphIndices.size(), FALSE, FALSE, pSink.Get());
+	pFontFace->GetGlyphRunOutline(App::instance->settings.FontSize, glyphIndices.data(), glyphAdvances.data(), glyphOffsets.data(), (UINT32)glyphIndices.size(), FALSE, FALSE, pSink.Get());
 
 	pSink->Close();
 
@@ -707,7 +679,7 @@ void ScreenSaverWindow::RenderText(const std::wstring& caption, float x, float y
 	D2D1_MATRIX_3X2_F transform = D2D1::Matrix3x2F::Translation(-advW / 2, y + h);
 	ComPtr<ID2D1TransformedGeometry> pTransformedGeometry;
 	App::instance->m_pD2DFactory->CreateTransformedGeometry(pPathGeometry.Get(), &transform, &pTransformedGeometry);
-	m_pRenderTarget->DrawGeometry(pTransformedGeometry.Get(), m_pTextOutlineBrush.Get(), App::instance->m_OutlineWidth);
+	m_pRenderTarget->DrawGeometry(pTransformedGeometry.Get(), m_pTextOutlineBrush.Get(), App::instance->settings.OutlineWidth);
 
 	App::instance->m_pDWriteFactory->CreateTextLayout(
 		caption.c_str(),
@@ -753,7 +725,7 @@ HRESULT ScreenSaverWindow::OnRender()
 	DrawSprite(m_CurrentSprite);
 	DrawSprite(m_NextSprite);
 
-	if (App::instance->m_RenderText)
+	if (App::instance->settings.RenderText)
 	{
 		if (m_CurrentSprite && m_CurrentSprite->imageInfo)
 		{
@@ -809,7 +781,7 @@ void App::StartSwap(bool animate, int offset)
 		return;
 	}
 
-	if (m_SyncChange) {
+	if (settings.SyncChange) {
 		for (auto& screen : m_Screensavers) {
 			screen.StartSwap(animate, offset);
 		}
@@ -821,7 +793,7 @@ void App::StartSwap(bool animate, int offset)
 		if (offset > 0) { m_CurentScreenIndex += offset; }
 	}
 
-	m_DisplayTimer = m_DisplayDuration;
+	m_DisplayTimer = settings.DisplayDuration;
 }
 
 void App::Update(float deltaTime)
@@ -840,7 +812,7 @@ void ScreenSaverWindow::StartSwap(bool animate, int offset)
 {
 	auto info = App::instance->m_Library.GotoImage(offset);
 	if (animate) {
-		m_FadeTimer = App::instance->m_FadeDuration;
+		m_FadeTimer = App::instance->settings.FadeDuration;
 		m_NextSprite->imageInfo = info;
 		LoadSprite(m_NextSprite);
 		m_NextSprite->alpha = 0;
@@ -867,7 +839,7 @@ void ScreenSaverWindow::Update(float deltaTime)
 
 	if (m_FadeTimer > 0.0f) {
 		m_FadeTimer -= deltaTime;
-		m_NextSprite->alpha = EaseInOutQuad(1 - m_FadeTimer / App::instance->m_FadeDuration);
+		m_NextSprite->alpha = EaseInOutQuad(1 - m_FadeTimer / App::instance->settings.FadeDuration);
 		if (m_FadeTimer <= 0.0f) {
 			EndFade();
 		}
@@ -929,8 +901,7 @@ LRESULT CALLBACK App::WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
 			break;
 
 		case 'T':
-			pApp->m_RenderText = !pApp->m_RenderText;
-			WriteBool(INI_SETTINGS, INI_RENDER_TEXT, true);
+			pApp->settings.ToggleRenderText();
 			break;
 		}
 	}
@@ -1111,116 +1082,5 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 	}
 
 	return 0;
-}
-
-std::wstring EnsureIniFileExists(bool create) {
-	wchar_t path[MAX_PATH];
-
-	// Get AppData directory path
-	HRESULT hr = SHGetFolderPath(NULL, CSIDL_APPDATA, NULL, 0, path);
-	if (FAILED(hr)) {
-		wprintf(L"Error getting AppData path: %08lx\n", hr);
-		return L"";
-	}
-
-	// Append your app's folder to the AppData path
-	wcscat_s(path, MAX_PATH, L"\\PhotoCycle");
-
-	if (create)
-	{
-		// Ensure the directory exists
-		BOOL success = CreateDirectory(path, NULL);
-		if (!success) {
-			wprintf(L"Error creating directory '%s'\n", path);
-			return L"";
-		}
-	}
-
-	// Append your app's folder to the AppData path
-	wcscat_s(path, MAX_PATH, L"\\config.ini");
-
-	if (create)
-	{
-		DWORD attr = GetFileAttributes(path);
-		if (attr == INVALID_FILE_ATTRIBUTES) {
-			HANDLE hFile = CreateFile(path, GENERIC_WRITE, 0, nullptr, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, nullptr);
-			if (hFile != INVALID_HANDLE_VALUE) CloseHandle(hFile);
-		}
-	}
-
-	return path;
-}
-
-void WriteInt(LPCWSTR section, LPCWSTR key, int value) {
-	auto file = EnsureIniFileExists(true);
-	wchar_t buffer[32];
-	swprintf_s(buffer, L"%d", value);
-	WritePrivateProfileString(section, key, buffer, file.c_str());
-}
-
-void WriteBool(LPCWSTR section, LPCWSTR key, bool value) {
-	auto file = EnsureIniFileExists(true);
-	BOOL result = WritePrivateProfileString(section, key, value ? L"1" : L"0", file.c_str());
-	if (!result) {
-		DWORD error = GetLastError();
-		wprintf(L"Write failed with error code: %lu\n", error);
-	}
-}
-
-void WriteList(LPCWSTR section, LPCWSTR key, const std::vector<std::wstring>& list, wchar_t delimiter) {
-	auto file = EnsureIniFileExists(true);
-	std::wstring joined;
-	for (size_t i = 0; i < list.size(); ++i) {
-		if (i > 0) joined += delimiter;
-		joined += list[i];
-	}
-	WritePrivateProfileString(section, key, joined.c_str(), file.c_str());
-}
-
-int ReadInt(LPCWSTR section, LPCWSTR key, int defaultValue) {
-	auto file = EnsureIniFileExists(false);
-	return GetPrivateProfileInt(section, key, defaultValue, file.c_str());
-}
-
-UINT32 ReadColor(LPCWSTR section, LPCWSTR key, UINT32 defaultValue) {
-	auto file = EnsureIniFileExists(false);
-	WCHAR buffer[64];
-	GetPrivateProfileString(section, key, nullptr, buffer, 64, file.c_str());
-	return buffer[0] ? wcstoul(buffer, nullptr, 16) : defaultValue;
-}
-
-float ReadFloat(LPCWSTR section, LPCWSTR key, float defaultValue) {
-	auto file = EnsureIniFileExists(false);
-	WCHAR buffer[64];
-	GetPrivateProfileString(section, key, nullptr, buffer, 64, file.c_str());
-	return buffer[0] ? static_cast<float>(_wtof(buffer)) : defaultValue;
-}
-
-bool ReadBool(LPCWSTR section, LPCWSTR key, bool defaultValue) {
-	auto file = EnsureIniFileExists(false);
-	return GetPrivateProfileInt(section, key, defaultValue ? 1 : 0, file.c_str()) != 0;
-}
-
-std::wstring ReadString(LPCWSTR section, LPCWSTR key, LPCWSTR defaultValue) {
-	auto file = EnsureIniFileExists(false);
-	WCHAR buffer[2048] = {};
-	GetPrivateProfileString(section, key, defaultValue, buffer, 2048, file.c_str());
-	return buffer;
-}
-
-std::vector<std::wstring> SplitList(const std::wstring& str, wchar_t delimiter) {
-	std::vector<std::wstring> result;
-	size_t start = 0, end;
-	while ((end = str.find(delimiter, start)) != std::wstring::npos) {
-		result.push_back(str.substr(start, end - start));
-		start = end + 1;
-	}
-	if (start < str.size())
-		result.push_back(str.substr(start));
-	return result;
-}
-
-std::vector<std::wstring> ReadList(LPCWSTR section, LPCWSTR key) {
-	return SplitList(ReadString(section, key, nullptr));
 }
 

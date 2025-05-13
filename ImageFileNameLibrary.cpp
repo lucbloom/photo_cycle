@@ -43,6 +43,7 @@ std::wstring Utf8ToWString(const std::string& str) {
 	return wstr;
 }
 
+
 std::wstring ExtractDateTaken(const std::wstring& imagePath) {
 	try {
 		auto image = Exiv2::ImageFactory::open(WStringToUtf8(imagePath));
@@ -110,6 +111,27 @@ std::wstring GetFileCreationDate(const std::wstring& filePath) {
 	}
 }
 
+void ImageInfo::CacheInfo()
+{
+	if (dateTaken.empty()) {
+		// Extract date taken from EXIF, or use filename or file creation date
+		dateTaken = ExtractDateTaken(filePath);
+		if (dateTaken.empty()) {
+			// If no DateTaken in EXIF, use the date from the filename or file creation date
+			std::filesystem::path fileName = std::filesystem::path(filePath).filename();
+			if (fileName.has_extension()) {
+				// You could parse the filename for date if the file follows a date-based naming convention
+				dateTaken = fileName.stem().wstring(); // Just a fallback, customize this as needed
+			}
+		}
+
+		if (dateTaken.empty()) {
+			// Fallback to file creation date
+			dateTaken = GetFileCreationDate(filePath);
+		}
+	}
+}
+
 void ImageFileNameLibrary::LoadImages(const std::wstring& directory, const std::vector<std::wstring>& exclude) {
 	for (const auto& entry : std::filesystem::directory_iterator(directory)) {
 		std::wstring path = entry.path().wstring();
@@ -127,22 +149,6 @@ void ImageFileNameLibrary::LoadImages(const std::wstring& directory, const std::
 			if (ext == L".jpg" || ext == L".jpeg" || ext == L".png" || ext == L".heic") {
 				ImageInfo* info = new ImageInfo();
 
-				// Extract date taken from EXIF, or use filename or file creation date
-				info->dateTaken = ExtractDateTaken(path);
-				if (info->dateTaken.empty()) {
-					// If no DateTaken in EXIF, use the date from the filename or file creation date
-					std::filesystem::path fileName = entry.path().filename();
-					if (fileName.has_extension()) {
-						// You could parse the filename for date if the file follows a date-based naming convention
-						info->dateTaken = fileName.stem().wstring(); // Just a fallback, customize this as needed
-					}
-				}
-
-				if (info->dateTaken.empty()) {
-					// Fallback to file creation date
-					info->dateTaken = GetFileCreationDate(path);
-				}
-
 				// Get the folder name
 				info->filePath = path;
 				info->folderName = entry.path().parent_path().filename().wstring();
@@ -155,6 +161,10 @@ void ImageFileNameLibrary::LoadImages(const std::wstring& directory, const std::
 					<< L", Folder: " << info->folderName << std::endl;
 			}
 		}
+		else if (entry.is_directory())
+		{
+			LoadImages(entry.path(), exclude);
+		}
 	}
 }
 
@@ -165,7 +175,7 @@ void ImageFileNameLibrary::ShuffleImages() {
 	m_CurrentImageIdx = 0;
 }
 
-const ImageInfo* ImageFileNameLibrary::GotoImage(int offset) {
+ImageInfo* ImageFileNameLibrary::GotoImage(int offset) {
 	if (m_ImageList.empty())
 	{
 		return NULL;

@@ -229,6 +229,7 @@
     <ClInclude Include="framework.h" />
     <ClInclude Include="ImageFileNameLibrary.h" />
     <ClInclude Include="Resource.h" />
+    <ClInclude Include="SettingsDialog.h" />
     <ClInclude Include="zlib\crc32.h" />
     <ClInclude Include="zlib\deflate.h" />
     <ClInclude Include="zlib\gzguts.h" />
@@ -311,6 +312,7 @@
     <ClCompile Include="exiv2\src\xmpsidecar.cpp" />
     <ClCompile Include="ImageFileNameLibrary.cpp" />
     <ClCompile Include="PhotoCycle.cpp" />
+    <ClCompile Include="SettingsDialog.cpp" />
     <ClCompile Include="zlib\adler32.c" />
     <ClCompile Include="zlib\compress.c" />
     <ClCompile Include="zlib\crc32.c" />

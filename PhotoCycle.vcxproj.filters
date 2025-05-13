@@ -2,10 +2,8 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClInclude Include="framework.h" />
-    <ClInclude Include="PhotoCycle.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="ImageFileNameLibrary.h" />
-    <ClInclude Include="TransitionManager.h" />
     <ClInclude Include="exiv2\src\canonmn_int.hpp">
       <Filter>exiv2\src</Filter>
     </ClInclude>
@@ -276,13 +274,13 @@
     <ClInclude Include="exiv2\include\exiv2\xmpsidecar.hpp">
       <Filter>exiv2\include\exiv2</Filter>
     </ClInclude>
+    <ClInclude Include="SettingsDialog.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="PhotoCycle.ico" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="PhotoCycle.cpp" />
-    <ClCompile Include="TransitionManager.cpp" />
     <ClCompile Include="ImageFileNameLibrary.cpp" />
     <ClCompile Include="exiv2\src\asfvideo.cpp">
       <Filter>exiv2\src</Filter>
@@ -530,6 +528,7 @@
     <ClCompile Include="zlib\uncompr.c">
       <Filter>zlib</Filter>
     </ClCompile>
+    <ClCompile Include="SettingsDialog.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="PhotoCycle.rc" />

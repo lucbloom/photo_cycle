@@ -2,7 +2,8 @@
 
 #include "framework.h"
 
-struct ImageInfo {
+class ImageInfo {
+public:
 	std::wstring dateTaken;
 	std::wstring filePath;
 	std::wstring folderName;
@@ -10,12 +11,14 @@ struct ImageInfo {
 	ImageInfo(const ImageInfo&) = default;
 	ImageInfo& operator=(const ImageInfo&) = default;
 	ImageInfo(ImageInfo&&) = default;
+
+	void CacheInfo();
 };
 
 class ImageFileNameLibrary {
 public:
 	void SetPaths(const std::vector<std::wstring>& include, const std::vector<std::wstring>& exclude);
-	const ImageInfo* GotoImage(int offset);
+	ImageInfo* GotoImage(int offset);
 
 private:
 	void ShuffleImages();
