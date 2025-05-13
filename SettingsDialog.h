@@ -10,6 +10,7 @@ public:
 	bool RenderText = true;
 	std::wstring TextFontName = L"Segoe UI";
 	UINT32 TextColor = 0xffffff;
+	UINT32 OutlineColor = 0x000000;
 	UINT32 BackgroundColor = 0x00000000;
 	float FontSize = 48;
 	float OutlineWidth = 5;

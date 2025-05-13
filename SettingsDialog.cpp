@@ -50,6 +50,7 @@ SettingsDialog::SettingsDialog()
 	RenderText = ReadBool(INI_SETTINGS, INI_RENDER_TEXT, RenderText);
 	TextFontName = ReadString(INI_SETTINGS, L"Font", TextFontName.c_str());
 	TextColor = ReadColor(INI_SETTINGS, L"FontColor", TextColor);
+	OutlineColor = ReadColor(INI_SETTINGS, L"OutlineColor", OutlineColor);
 	BackgroundColor = ReadColor(INI_SETTINGS, L"BackgroundColor", BackgroundColor);
 
 	IncludePaths = ReadList(INI_IMAGES, L"Include");
@@ -83,6 +84,7 @@ void SettingsDialog::Show()
 		WriteBool(INI_SETTINGS, INI_RENDER_TEXT, RenderText);
 		WriteString(INI_SETTINGS, L"Font", TextFontName.c_str());
 		WriteColor(INI_SETTINGS, L"FontColor", TextColor);
+		WriteColor(INI_SETTINGS, L"OutlineColor", OutlineColor);
 		WriteColor(INI_SETTINGS, L"BackgroundColor", BackgroundColor);
 		WriteList(INI_IMAGES, L"Include", IncludePaths);
 		WriteList(INI_IMAGES, L"Exclude", ExcludePaths);
@@ -109,7 +111,7 @@ void LoadAndScaleImageToFitDialog(HWND hDlg)
 		source.reset(Gdiplus::Bitmap::FromFile(tempFile.c_str()));
 		DeleteFileW(tempFile.c_str());
 	}
-	
+
 	RECT rect;
 	GetClientRect(hDlg, &rect);
 
@@ -200,6 +202,23 @@ static DWRITE_FONT_WEIGHT GetSelectedFontWeight(HWND hDlg) {
 	}
 }
 
+COLORREF ToWinColor(COLORREF rrggbb)
+{
+	return RGB(
+		(rrggbb >> 16) & 0xFF, // R
+		(rrggbb >> 8) & 0xFF,  // G
+		rrggbb & 0xFF          // B
+	);
+}
+COLORREF FromWinColor(COLORREF bbrrgg)
+{
+	return RGB(
+		(bbrrgg >> 16) & 0xFF, // R
+		(bbrrgg >> 8) & 0xFF,  // G
+		bbrrgg & 0xFF          // B
+	);
+}
+
 INT_PTR CALLBACK SettingsDialog::SettingsDlgProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam) {
 	static SettingsDialog* pSettings = nullptr;
 
@@ -228,8 +247,9 @@ INT_PTR CALLBACK SettingsDialog::SettingsDlgProc(HWND hDlg, UINT message, WPARAM
 		SetFloat(hDlg, IDC_DISPLAY_DURATION, pSettings->DisplayDuration);
 		CheckDlgButton(hDlg, IDC_RENDER_TEXT, pSettings->RenderText ? BST_CHECKED : BST_UNCHECKED);
 		SetDlgItemTextW(hDlg, IDC_FONT_NAME, pSettings->TextFontName.c_str());
-		SetHex(hDlg, IDC_TEXT_COLOR, pSettings->TextColor);
-		SetHex(hDlg, IDC_BACKGROUND_COLOR, pSettings->BackgroundColor);
+		//SetHex(hDlg, IDC_TEXT_COLOR, pSettings->TextColor);
+		//SetHex(hDlg, IDC_OUTLINE_COLOR, pSettings->OutlineColor);
+		//SetHex(hDlg, IDC_BACKGROUND_COLOR, pSettings->BackgroundColor);
 		SetFloat(hDlg, IDC_FONT_SIZE, pSettings->FontSize);
 		SetFloat(hDlg, IDC_OUTLINE_WIDTH, pSettings->OutlineWidth);
 		CheckDlgButton(hDlg, IDC_SYNC_CHANGE, pSettings->SyncChange ? BST_CHECKED : BST_UNCHECKED);
@@ -265,8 +285,6 @@ INT_PTR CALLBACK SettingsDialog::SettingsDlgProc(HWND hDlg, UINT message, WPARAM
 				GetDlgItemTextW(hDlg, IDC_FONT_NAME, buf, 256);
 				pSettings->TextFontName = buf;
 			}
-			pSettings->TextColor = GetHex(hDlg, IDC_TEXT_COLOR);
-			pSettings->BackgroundColor = GetHex(hDlg, IDC_BACKGROUND_COLOR);
 			pSettings->FontSize = GetFloat(hDlg, IDC_FONT_SIZE);
 			pSettings->OutlineWidth = GetFloat(hDlg, IDC_OUTLINE_WIDTH);
 			pSettings->SyncChange = IsDlgButtonChecked(hDlg, IDC_SYNC_CHANGE) == BST_CHECKED;
@@ -301,12 +319,19 @@ INT_PTR CALLBACK SettingsDialog::SettingsDlgProc(HWND hDlg, UINT message, WPARAM
 			EndDialog(hDlg, IDCANCEL);
 			return TRUE;
 
-		case IDC_TEXT_COLOR_BTN:
+		case IDC_TEXT_COLOR_BOX:
 			pSettings->TextColor = ShowColorDialog(hDlg, pSettings->TextColor);
+			InvalidateRect(hDlg, NULL, TRUE);
 			return TRUE;
 
-		case IDC_BACKGROUND_COLOR_BTN:
+		case IDC_OUTLINE_COLOR_BOX:
+			pSettings->OutlineColor = ShowColorDialog(hDlg, pSettings->OutlineColor);
+			InvalidateRect(hDlg, NULL, TRUE);
+			return TRUE;
+
+		case IDC_BACKGROUND_COLOR_BOX:
 			pSettings->BackgroundColor = ShowColorDialog(hDlg, pSettings->BackgroundColor);
+			InvalidateRect(hDlg, NULL, TRUE);
 			return TRUE;
 
 		case IDC_FONT_SELECT_BTN:
@@ -326,6 +351,15 @@ INT_PTR CALLBACK SettingsDialog::SettingsDlgProc(HWND hDlg, UINT message, WPARAM
 			return TRUE;
 		}
 
+		case IDC_INCLUDE_REMOVE: {
+			HWND hList = GetDlgItem(hDlg, IDC_INCLUDE_LIST);
+			int sel = (int)SendMessageW(hList, LB_GETCURSEL, 0, 0);
+			if (sel != LB_ERR) {
+				SendMessageW(hList, LB_DELETESTRING, sel, 0);
+			}
+			return TRUE;
+		}
+
 		case IDC_EXCLUDE_ADD: {
 			std::wstring folder;
 			if (PickFolder(hDlg, folder)) {
@@ -335,9 +369,46 @@ INT_PTR CALLBACK SettingsDialog::SettingsDlgProc(HWND hDlg, UINT message, WPARAM
 			return TRUE;
 		}
 
+		case IDC_EXCLUDE_REMOVE: {
+			HWND hList = GetDlgItem(hDlg, IDC_EXCLUDE_LIST);
+			int sel = (int)SendMessageW(hList, LB_GETCURSEL, 0, 0);
+			if (sel != LB_ERR) {
+				SendMessageW(hList, LB_DELETESTRING, sel, 0);
+			}
+			return TRUE;
 		}
-
+		}
 		break;
+
+		case WM_PAINT: {
+			PAINTSTRUCT ps;
+			HDC hdc = BeginPaint(hDlg, &ps);
+
+			HWND hBox = GetDlgItem(hDlg, IDC_TEXT_COLOR_BOX);
+			RECT rc;
+			GetClientRect(hBox, &rc);
+			MapWindowPoints(hBox, hDlg, (LPPOINT)&rc, 2);
+			HBRUSH hBrush = CreateSolidBrush(ToWinColor(pSettings->TextColor));
+			FillRect(hdc, &rc, hBrush);
+			DeleteObject(hBrush);
+
+			hBox = GetDlgItem(hDlg, IDC_OUTLINE_COLOR_BOX);
+			GetClientRect(hBox, &rc);
+			MapWindowPoints(hBox, hDlg, (LPPOINT)&rc, 2);
+			hBrush = CreateSolidBrush(ToWinColor(pSettings->OutlineColor));
+			FillRect(hdc, &rc, hBrush);
+			DeleteObject(hBrush);
+
+			hBox = GetDlgItem(hDlg, IDC_BACKGROUND_COLOR_BOX);
+			GetClientRect(hBox, &rc);
+			MapWindowPoints(hBox, hDlg, (LPPOINT)&rc, 2);
+			hBrush = CreateSolidBrush(ToWinColor(pSettings->BackgroundColor));
+			FillRect(hdc, &rc, hBrush);
+			DeleteObject(hBrush);
+
+			EndPaint(hDlg, &ps);
+			return TRUE;
+		}
 	}
 	return FALSE;
 }
@@ -347,12 +418,13 @@ static COLORREF ShowColorDialog(HWND hWnd, COLORREF initialColor) {
 	static COLORREF customColors[16] = {};
 	cc.hwndOwner = hWnd;
 	cc.lpCustColors = customColors;
-	cc.rgbResult = initialColor;
+	cc.rgbResult = ToWinColor(initialColor);
 	cc.Flags = CC_RGBINIT | CC_FULLOPEN;
 
 	if (ChooseColor(&cc))
-		return cc.rgbResult;
-
+	{
+		return FromWinColor(cc.rgbResult);
+	}
 	return initialColor;
 }
 

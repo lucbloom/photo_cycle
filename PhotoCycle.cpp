@@ -226,7 +226,7 @@ HRESULT ScreenSaverWindow::CreateDeviceResources() {
 		if (SUCCEEDED(hr)) {
 			// Create a solid color brush for text
 			hr = m_pRenderTarget->CreateSolidColorBrush(
-				D2D1::ColorF(D2D1::ColorF::Black),
+				D2D1::ColorF(App::instance->settings.OutlineColor),
 				m_pTextOutlineBrush.GetAddressOf()
 			);
 
@@ -364,7 +364,7 @@ HRESULT App::Initialize(HINSTANCE hInstance, const std::wstring& cmd) {
 				screen.GetMaximizedRect();
 				screen.m_hwnd = CreateWindow(
 					windowClassName,
-					L"Photo Cycler",
+					L"Photo Cycle",
 					FULLSCREEN_STYLE,
 					screen.m_MaximizedRect.left, screen.m_MaximizedRect.top,
 					screen.m_MaximizedRect.right, screen.m_MaximizedRect.bottom,
@@ -634,6 +634,14 @@ void ScreenSaverWindow::DrawHackOutline(float x, float y, float xo, float yo)
 	);
 }
 
+void SetBrushColor(ID2D1SolidColorBrush* brush, UINT32 color, float alpha)
+{
+	float red = ((color >> 16) & 0xFF) / 255.0f;
+	float green = ((color >> 8) & 0xFF) / 255.0f;
+	float blue = (color & 0xFF) / 255.0f;
+	brush->SetColor(D2D1::ColorF(red, green, blue, alpha));
+}
+
 void ScreenSaverWindow::RenderText(const std::wstring& caption, float alpha, float x, float y, float w, float h)
 {
 	if (w <= 0 || h <= 0 || alpha <= 0)
@@ -701,12 +709,8 @@ void ScreenSaverWindow::RenderText(const std::wstring& caption, float alpha, flo
 	// OUTLINE (WIP) App::instance->m_pD2DFactory->CreateTransformedGeometry(pPathGeometry.Get(), &transform, &pTransformedGeometry);
 	// OUTLINE (WIP) m_pRenderTarget->DrawGeometry(pTransformedGeometry.Get(), m_pTextOutlineBrush.Get(), App::instance->settings.OutlineWidth);
 
-	auto c = App::instance->settings.TextColor;
-	float red = ((c >> 16) & 0xFF) / 255.0f;
-	float green = ((c >> 8) & 0xFF) / 255.0f;
-	float blue = (c & 0xFF) / 255.0f;
-	m_pTextFillBrush->SetColor(D2D1::ColorF(red, green, blue, alpha));
-	m_pTextOutlineBrush->SetColor(D2D1::ColorF(0, 0, 0, alpha));
+	SetBrushColor(m_pTextFillBrush.Get(), App::instance->settings.TextColor, alpha);
+	SetBrushColor(m_pTextOutlineBrush.Get(), App::instance->settings.OutlineColor, alpha);
 
 	App::instance->m_pDWriteFactory->CreateTextLayout(
 		caption.c_str(),

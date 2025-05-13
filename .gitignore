@@ -401,3 +401,4 @@ FodyWeavers.xsd
 *.sln.iml
 /enc_temp_folder/*
 /test.jpg
+/build/PhotoCycle.zip
