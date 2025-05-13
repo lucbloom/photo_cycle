@@ -2,6 +2,7 @@
 // Microsoft Visual C++ generated include file.
 // Used by PhotoCycle.rc
 //
+#define VS_VERSION_INFO                 1
 #define IDI_PHOTOCYCLE                  1
 #define IDD_SETTINGS_DIALOG             101
 #define IDS_APP_TITLE                   103
@@ -27,6 +28,8 @@
 #define IDC_EXCLUDE_LIST                1204
 #define IDC_EXCLUDE_ADD                 1205
 #define IDC_EXCLUDE_REMOVE              1206
+#define IDC_IMAGE_PICTURE               1301
+#define IDR_MY_IMAGE                    1302
 #define IDC_STATIC                      -1
 
 // Next default values for new objects

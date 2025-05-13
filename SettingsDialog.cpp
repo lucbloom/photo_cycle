@@ -2,6 +2,15 @@
 
 #include "resource.h"
 #include <shlobj.h>
+#include <gdiplus.h>
+#include <memory>
+#include <iostream>
+
+#pragma comment(lib, "gdiplus.lib")
+
+using namespace Gdiplus;
+
+ULONG_PTR g_GdiplusToken;
 
 static std::wstring EnsureIniFileExists(bool create);
 
@@ -53,6 +62,9 @@ SettingsDialog::SettingsDialog()
 
 void SettingsDialog::Show()
 {
+	GdiplusStartupInput gdiplusStartupInput;
+	GdiplusStartup(&g_GdiplusToken, &gdiplusStartupInput, NULL);
+
 	INT_PTR result = DialogBoxParam(
 		GetModuleHandle(nullptr),
 		MAKEINTRESOURCE(IDD_SETTINGS_DIALOG),
@@ -75,6 +87,65 @@ void SettingsDialog::Show()
 		WriteList(INI_IMAGES, L"Include", IncludePaths);
 		WriteList(INI_IMAGES, L"Exclude", ExcludePaths);
 	}
+
+	GdiplusShutdown(g_GdiplusToken);
+}
+
+void LoadAndScaleImageToFitDialog(HWND hDlg, const WCHAR* filename)
+{
+	std::unique_ptr<Gdiplus::Bitmap> source;
+	//bool fromRes = false;
+	//if (fromRes)
+	{
+		HRSRC hRes = FindResource(nullptr, MAKEINTRESOURCE(IDR_MY_IMAGE), L"JPG");
+		DWORD dwSize = SizeofResource(nullptr, hRes);
+		HGLOBAL hResData = LoadResource(nullptr, hRes);
+		void* pData = LockResource(hResData);
+		IStream* pStream = nullptr;
+		HGLOBAL hMem = GlobalAlloc(GMEM_MOVEABLE, dwSize);
+		memcpy(GlobalLock(hMem), pData, dwSize);
+		GlobalUnlock(hMem);
+		HRESULT hr = CreateStreamOnHGlobal(hMem, TRUE, &pStream);
+		LARGE_INTEGER zero = {};
+		pStream->Seek(zero, STREAM_SEEK_SET, nullptr);
+		source.reset(Gdiplus::Bitmap::FromStream(pStream));
+		pStream->Release();
+		GlobalFree(hMem);
+	}
+	//else
+	//{
+	//	source.reset(Gdiplus::Bitmap::FromFile(filename));
+	//}
+
+	RECT rect;
+	GetClientRect(hDlg, &rect);
+
+	int srcWidth = source->GetWidth();
+	int srcHeight = source->GetHeight();
+	int maxHeight = 160;
+	int destWidth = rect.right;
+	int destHeight = maxHeight;
+
+	// Maintain aspect ratio while fitting within maxHeight
+	double srcAspect = static_cast<double>(srcWidth) / srcHeight;
+	destWidth = static_cast<int>(destHeight * srcAspect);
+	if (destWidth > rect.right) {
+		destWidth = rect.right;
+		destHeight = static_cast<int>(destWidth / srcAspect);
+	}
+
+	// Create and scale the image
+	Gdiplus::Bitmap target(destWidth, destHeight, PixelFormat32bppARGB);
+	Gdiplus::Graphics g(&target);
+	g.SetInterpolationMode(Gdiplus::InterpolationModeHighQualityBicubic);
+	g.DrawImage(source.get(), 0, 0, destWidth, destHeight);
+
+	HBITMAP hBitmap = nullptr;
+	target.GetHBITMAP(Gdiplus::Color(0, 0, 0), &hBitmap);
+
+	HWND hControl = GetDlgItem(hDlg, IDC_IMAGE_PICTURE);
+	SendMessage(hControl, STM_SETIMAGE, IMAGE_BITMAP, (LPARAM)hBitmap);
+	SetWindowPos(hControl, nullptr, (rect.right - destWidth) / 2, (maxHeight - destHeight) / 2, 0, 0, SWP_NOZORDER | SWP_NOSIZE);
 }
 
 void SettingsDialog::ToggleRenderText()
@@ -179,6 +250,8 @@ INT_PTR CALLBACK SettingsDialog::SettingsDlgProc(HWND hDlg, UINT message, WPARAM
 		for (const auto& path : pSettings->ExcludePaths) {
 			SendDlgItemMessageW(hDlg, IDC_EXCLUDE_LIST, LB_ADDSTRING, 0, (LPARAM)path.c_str());
 		}
+
+		LoadAndScaleImageToFitDialog(hDlg, L"logo.jpg");
 
 		return TRUE;
 	}
