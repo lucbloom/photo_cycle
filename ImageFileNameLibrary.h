@@ -4,7 +4,9 @@
 
 class ImageInfo {
 public:
+	int idx = -1;
 	std::wstring dateTaken;
+	int rotation = -1;
 	std::wstring filePath;
 	std::wstring folderName;
 	ImageInfo() = default;

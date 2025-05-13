@@ -236,11 +236,16 @@ HRESULT ScreenSaverWindow::CreateDeviceResources() {
 				m_pTextFillBrush.GetAddressOf()
 			);
 		}
+		else
+		{
+			std::cout << "Error (" << hr << ") creating Render target for window " << m_hwnd;
+		}
 	}
 
 	if (!m_CurrentSprite->imageInfo)
 	{
-		LoadCurrentSprite();
+		m_CurrentSprite->imageInfo = App::instance->m_Library.GotoImage(0);
+		LoadSprite(m_CurrentSprite);
 	}
 
 	if (!m_CurrentSprite->bitmap.Get())
@@ -254,12 +259,6 @@ HRESULT ScreenSaverWindow::CreateDeviceResources() {
 	}
 
 	return hr;
-}
-
-void ScreenSaverWindow::LoadCurrentSprite()
-{
-	m_CurrentSprite->imageInfo = App::instance->m_Library.GotoImage(0);
-	LoadSprite(m_CurrentSprite);
 }
 
 #define FULLSCREEN_STYLE WS_POPUP
@@ -371,7 +370,7 @@ HRESULT App::Initialize(HINSTANCE hInstance, const std::wstring& cmd) {
 					nullptr,
 					nullptr,
 					hInstance,
-					this
+					&screen
 				);
 			}
 		}
@@ -385,8 +384,9 @@ HRESULT App::Initialize(HINSTANCE hInstance, const std::wstring& cmd) {
 		// Show the window
 		ShowWindow(screen.m_hwnd, SW_SHOWNORMAL);
 		UpdateWindow(screen.m_hwnd);
-
-		screen.StartSwap(false, 1);
+		screen.StartSwap(true, 0);
+		screen.Update(0);
+		screen.OnRender();
 	}
 
 	//if (!startFullscreen)
@@ -480,50 +480,74 @@ HRESULT ScreenSaverWindow::LoadBitmapFromFileWithTransparencyMixedToBlack(Sprite
 		return -1;
 	}
 
-	// Initialize WIC and load the image
-	Microsoft::WRL::ComPtr<IWICBitmapDecoder> pDecoder;
-	Microsoft::WRL::ComPtr<IWICBitmapFrameDecode> pFrame;
-	Microsoft::WRL::ComPtr<IWICFormatConverter> pConverter;
+	ComPtr<IWICBitmapDecoder> pDecoder;
+	ComPtr<IWICBitmapFrameDecode> pFrame;
+	ComPtr<IWICFormatConverter> pConverter;
+	ComPtr<IWICBitmapFlipRotator> pRotator;
 
+	// Create decoder
 	HRESULT hr = App::instance->m_pWICFactory->CreateDecoderFromFilename(
 		sprite->imageInfo->filePath.c_str(),
 		nullptr,
 		GENERIC_READ,
-		WICDecodeOptions::WICDecodeMetadataCacheOnDemand,
+		WICDecodeMetadataCacheOnDemand,
 		&pDecoder);
 	if (FAILED(hr)) return hr;
 
+	// Get frame
 	hr = pDecoder->GetFrame(0, &pFrame);
 	if (FAILED(hr)) return hr;
 
+	// Convert to 32bppPBGRA
 	hr = App::instance->m_pWICFactory->CreateFormatConverter(&pConverter);
 	if (FAILED(hr)) return hr;
 
 	hr = pConverter->Initialize(
 		pFrame.Get(),
-		GUID_WICPixelFormat32bppPBGRA,  // Convert to 32-bit BGRA format (including alpha)
+		GUID_WICPixelFormat32bppPBGRA,
 		WICBitmapDitherTypeNone,
 		nullptr,
 		0.0f,
 		WICBitmapPaletteTypeCustom);
 	if (FAILED(hr)) return hr;
 
+	// Apply rotation
+	WICBitmapTransformOptions transform = WICBitmapTransformRotate0;
+	switch (sprite->imageInfo->rotation) {
+	case 90:  transform = WICBitmapTransformRotate90; break;
+	case 180: transform = WICBitmapTransformRotate180; break;
+	case 270: transform = WICBitmapTransformRotate270; break;
+	default: transform = WICBitmapTransformRotate0; break;
+	}
+
+	ComPtr<IWICBitmapSource> pSource = pConverter;
+
+	if (transform != WICBitmapTransformRotate0) {
+		hr = App::instance->m_pWICFactory->CreateBitmapFlipRotator(&pRotator);
+		if (FAILED(hr)) return hr;
+
+		hr = pRotator->Initialize(pConverter.Get(), transform);
+		if (FAILED(hr)) return hr;
+
+		pSource = pRotator;
+	}
+
+	// Get final size
 	UINT width, height;
-	hr = pConverter->GetSize(&width, &height);
+	hr = pSource->GetSize(&width, &height);
 	if (FAILED(hr)) return hr;
 
-	// Create a D2D bitmap from the converted WIC image
+	// Create D2D bitmap
 	D2D1_BITMAP_PROPERTIES props;
 	props.pixelFormat = D2D1_PIXEL_FORMAT(DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED);
 	m_pRenderTarget->GetDpi(&props.dpiX, &props.dpiY);
 
 	Microsoft::WRL::ComPtr<ID2D1Bitmap> pBitmap;
-	hr = m_pRenderTarget->CreateBitmap(
+	m_pRenderTarget->CreateBitmap(
 		D2D1::SizeU(width, height),
 		nullptr, 0,
 		props,
 		&pBitmap);
-	if (FAILED(hr)) return hr;
 
 	// Get the pixel data from the WIC converter
 	UINT stride = width * 4; // 4 bytes per pixel (BGRA)
@@ -571,7 +595,7 @@ void ScreenSaverWindow::DiscardDeviceResources() {
 }
 
 void ScreenSaverWindow::DrawSprite(Sprite* sprite) {
-	if (!sprite || !sprite->imageInfo) {
+	if (!sprite || !sprite->imageInfo || !sprite->bitmap) {
 		return;
 	}
 
@@ -838,10 +862,16 @@ void App::StartSwap(bool animate, int offset)
 		}
 	}
 	else {
-		if (offset < 0) { m_CurentScreenIndex += offset; }
-		m_CurentScreenIndex = (m_CurentScreenIndex + (int)m_Screensavers.size()) % (int)m_Screensavers.size();
-		m_Screensavers[m_CurentScreenIndex].StartSwap(animate, offset);
-		if (offset > 0) { m_CurentScreenIndex += offset; }
+		if (offset > 0) {
+			// Going forward: advance first, then animate new screen
+			m_CurentScreenIndex = (m_CurentScreenIndex + 1) % (int)m_Screensavers.size();
+			m_Screensavers[m_CurentScreenIndex].StartSwap(animate, offset);
+		}
+		else if (offset < 0) {
+			// Going back: animate current screen, then move index backward
+			m_Screensavers[m_CurentScreenIndex].StartSwap(animate, offset);
+			m_CurentScreenIndex = (m_CurentScreenIndex - 1 + (int)m_Screensavers.size()) % (int)m_Screensavers.size();
+		}
 	}
 
 	m_DisplayTimer = settings.DisplayDuration;
@@ -861,17 +891,29 @@ void App::Update(float deltaTime)
 
 void ScreenSaverWindow::StartSwap(bool animate, int offset)
 {
-	auto info = App::instance->m_Library.GotoImage(offset);
-	if (animate) {
-		m_FadeTimer = App::instance->settings.FadeDuration;
-		m_NextSprite->imageInfo = info;
-		LoadSprite(m_NextSprite);
-		m_NextSprite->alpha = 0;
-	}
-	else {
-		EndFade();
-		m_CurrentSprite->imageInfo = info;
-		LoadSprite(m_CurrentSprite);
+	for (bool success = false; !success;) {
+		auto info = App::instance->m_Library.GotoImage(offset);
+		Sprite* sprite = m_CurrentSprite;
+		if (animate)
+		{
+			m_FadeTimer = App::instance->settings.FadeDuration;
+			m_NextSprite->alpha = 0;
+			sprite = m_NextSprite;
+		}
+		else
+		{
+			EndFade();
+		}
+
+		sprite->imageInfo = info;
+		LoadSprite(sprite);
+		success = sprite->bitmap;
+
+		if (!m_pRenderTarget)
+		{
+			// Exit because bitmap will be null.
+			return;
+		}
 	}
 }
 
@@ -899,29 +941,31 @@ void ScreenSaverWindow::Update(float deltaTime)
 
 LRESULT CALLBACK App::WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
+	auto app = App::instance;
 	if (message == WM_CREATE) {
 		LPCREATESTRUCT pcs = (LPCREATESTRUCT)lParam;
-		App* pApp = (App*)pcs->lpCreateParams;
-		SetWindowLongPtr(hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(pApp));
+		ScreenSaverWindow* screen = reinterpret_cast<ScreenSaverWindow*>(pcs->lpCreateParams);
+		SetWindowLongPtr(hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(screen));
+		screen->m_hwnd = hwnd;
+		screen->Update(0);
+		screen->OnRender();
 		return 1;
-	}
-
-	App* pApp = reinterpret_cast<App*>(GetWindowLongPtr(hwnd, GWLP_USERDATA));
-	if (!pApp) {
-		return DefWindowProc(hwnd, message, wParam, lParam);
 	}
 
 	switch (message) {
 	case WM_SYSCOMMAND: // Detect maximize button click
 		if (wParam == SC_MAXIMIZE) {
-			pApp->SetFullscreen(true);
+			if (app) app->SetFullscreen(true);
 		}
 		break;
 
 	case WM_SIZE:
-		for (auto& screen : pApp->m_Screensavers) {
-			if (screen.m_hwnd == hwnd) {
-				screen.OnResize(LOWORD(lParam), HIWORD(lParam));
+		if (app)
+		{
+			for (auto& screen : app->m_Screensavers) {
+				if (screen.m_hwnd == hwnd) {
+					screen.OnResize(LOWORD(lParam), HIWORD(lParam));
+				}
 			}
 		}
 		break;
@@ -929,9 +973,9 @@ LRESULT CALLBACK App::WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
 	case WM_SYSKEYDOWN:
 	{
 		auto isAltDown = GetKeyState(VK_MENU) & 0x8000;
-		if (isAltDown && wParam == VK_RETURN) {
+		if (app && isAltDown && wParam == VK_RETURN) {
 			BOOL isFullscreen = !(GetWindowLong(hwnd, GWL_STYLE) & WS_OVERLAPPEDWINDOW);
-			pApp->SetFullscreen(!isFullscreen);
+			app->SetFullscreen(!isFullscreen);
 		}
 	}
 	break;
@@ -940,19 +984,24 @@ LRESULT CALLBACK App::WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
 	{
 		switch (wParam) {
 		case VK_ESCAPE:
-			PostQuitMessage(0);
+			if (app)
+			{
+				for (auto& screen : app->m_Screensavers) {
+					DestroyWindow(screen.m_hwnd);
+				}
+			}
 			break;
 
 		case VK_LEFT:
-			pApp->StartSwap(false, -1);
+			if (app) app->StartSwap(false, -1);
 			break;
 
 		case VK_RIGHT:
-			pApp->StartSwap(false, 1);
+			if (app) app->StartSwap(false, 1);
 			break;
 
 		case 'T':
-			pApp->settings.ToggleRenderText();
+			if (app) app->settings.ToggleRenderText();
 			break;
 		}
 	}
@@ -967,6 +1016,12 @@ LRESULT CALLBACK App::WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
 	//	break;
 
 	case WM_DESTROY:
+		if (app)
+		{
+			for (auto& screen : app->m_Screensavers) {
+				DestroyWindow(screen.m_hwnd);
+			}
+		}
 		PostQuitMessage(0);
 		break;
 

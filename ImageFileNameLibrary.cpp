@@ -66,6 +66,29 @@ std::wstring Utf8ToWString(const std::string& str) {
 	return wstr;
 }
 
+int GetExifRotation(const std::wstring& imagePath) {
+	try {
+		auto image = Exiv2::ImageFactory::open(WStringToUtf8(imagePath));
+		if (!image) return 0;
+
+		image->readMetadata();
+		auto& exifData = image->exifData();
+		auto it = exifData.findKey(Exiv2::ExifKey("Exif.Image.Orientation"));
+		if (it == exifData.end()) return 0;
+
+		int orientation = it->toUint32();
+		switch (orientation) {
+		case 3: return 180;
+		case 6: return 90;
+		case 8: return 270;
+		default: return 0;
+		}
+	}
+	catch (...) {
+		return 0;
+	}
+}
+
 
 DateResult ExtractDateTaken(const std::wstring& imagePath) {
 	DateResult result;
@@ -168,6 +191,11 @@ void ImageInfo::CacheInfo()
 			dateTaken = L" ";
 		}
 	}
+
+	if (rotation < 0)
+	{
+		rotation = GetExifRotation(filePath);
+	}
 }
 
 void ImageFileNameLibrary::LoadImages(const std::wstring& directory, const std::vector<std::wstring>& exclude) {
@@ -206,6 +234,10 @@ void ImageFileNameLibrary::ShuffleImages() {
 	std::random_device rd;
 	std::mt19937 g(rd());
 	std::shuffle(m_ImageList.begin(), m_ImageList.end(), g);
+	for (int i = 0; i < (int)m_ImageList.size(); i++)
+	{
+		m_ImageList[i]->idx = i;
+	}
 	m_CurrentImageIdx = 0;
 }
 
