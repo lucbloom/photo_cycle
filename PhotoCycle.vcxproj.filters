@@ -2,7 +2,6 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClInclude Include="framework.h" />
-    <ClInclude Include="Resource.h" />
     <ClInclude Include="ImageFileNameLibrary.h" />
     <ClInclude Include="exiv2\src\canonmn_int.hpp">
       <Filter>exiv2\src</Filter>
@@ -275,6 +274,7 @@
       <Filter>exiv2\include\exiv2</Filter>
     </ClInclude>
     <ClInclude Include="SettingsDialog.h" />
+    <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="PhotoCycle.ico" />

@@ -267,8 +267,9 @@ INT_PTR CALLBACK SettingsDialog::SettingsDlgProc(HWND hDlg, UINT message, WPARAM
 		LoadAndScaleImageToFitDialog(hDlg);
 
 		//HICON hIcon = (HICON)LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_PHOTOCYCLE), IMAGE_ICON, 0, 0, LR_DEFAULTCOLOR);
+		//HICON hIconSmall = (HICON)LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_PHOTOCYCLE_SMALL), IMAGE_ICON, 0, 0, LR_DEFAULTCOLOR);
 		//SendMessage(hDlg, WM_SETICON, ICON_BIG, (LPARAM)hIcon);
-		//SendMessage(hDlg, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);
+		//SendMessage(hDlg, WM_SETICON, ICON_SMALL, (LPARAM)hIconSmall);
 
 		return TRUE;
 	}

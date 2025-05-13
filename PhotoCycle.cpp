@@ -97,7 +97,6 @@ public:
 	float m_FadeTimer = 0;
 
 	HRESULT CreateDeviceResources();
-	void LoadCurrentSprite();
 	HRESULT LoadBitmapFromFileWithTransparencyMixedToBlack(Sprite* sprite);
 	void DiscardDeviceResources();
 	void LoadSprite(Sprite* sprite);
@@ -137,6 +136,7 @@ public:
 
 	bool m_IsPreview = false;
 	bool m_IsConfigDialogMode = false;
+	bool m_IsPaused = false;
 
 	App() { instance = this; }
 	~App();
@@ -147,7 +147,7 @@ public:
 	void SetFullscreen(bool fullscreen);
 	static LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 	void StartSwap(bool animate, int offset);
-	void EndFade();
+	void TogglePause() { m_IsPaused = !m_IsPaused; }
 
 	// Load a bitmap from a file
 	HRESULT LoadBitmapFromFile(ID2D1RenderTarget* m_pRenderTarget, IWICImagingFactory* pIWICFactory, PCWSTR uri, UINT destinationWidth, UINT destinationHeight, ID2D1Bitmap** ppBitmap);
@@ -299,36 +299,6 @@ HRESULT App::Initialize(HINSTANCE hInstance, const std::wstring& cmd) {
 	}
 	else
 	{
-		//DISPLAY_DEVICE dd;
-		//dd.cb = sizeof(dd);
-		//int i = 0;
-		//
-		//while (EnumDisplayDevices(NULL, i, &dd, 0)) {
-		//	DEVMODE dm;
-		//	dm.dmSize = sizeof(dm);
-		//
-		//	if (EnumDisplaySettings(dd.DeviceName, ENUM_CURRENT_SETTINGS, &dm)) {
-		//		WNDCLASS wc = { 0 };
-		//		wc.lpfnWndProc = WndProc;
-		//		wc.hInstance = hInstance;
-		//		wc.lpszClassName = L"ScreenSaverClass";
-		//		RegisterClass(&wc);
-		//
-		//		m_hwnd = CreateWindowEx(
-		//			WS_EX_TOPMOST,
-		//			L"ScreenSaverClass",
-		//			L"ScreenSaver",
-		//			WS_POPUP,
-		//			dm.dmPosition.x, dm.dmPosition.y, dm.dmPelsWidth, dm.dmPelsHeight,
-		//			nullptr, nullptr, hInstance, this
-		//		);
-		//
-		//		ShowWindow(m_hwnd, SW_SHOW);
-		//	}
-		//
-		//	i++;
-		//}
-
 		auto windowClassName = L"Direct2DAppClass";
 
 		// Register window class
@@ -338,7 +308,8 @@ HRESULT App::Initialize(HINSTANCE hInstance, const std::wstring& cmd) {
 		wcex.cbClsExtra = 0;
 		wcex.cbWndExtra = sizeof(LONG_PTR);
 		wcex.hInstance = hInstance;
-		wcex.hIcon = LoadIcon(nullptr, IDI_APPLICATION);
+		wcex.hIcon = (HICON)LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_PHOTOCYCLE), IMAGE_ICON, 0, 0, LR_DEFAULTCOLOR);
+		wcex.hIconSm = (HICON)LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_PHOTOCYCLE_SMALL), IMAGE_ICON, 0, 0, LR_DEFAULTCOLOR);
 		wcex.hCursor = LoadCursor(nullptr, IDC_ARROW);
 		wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
 		wcex.lpszMenuName = nullptr;
@@ -361,7 +332,8 @@ HRESULT App::Initialize(HINSTANCE hInstance, const std::wstring& cmd) {
 				auto& screen = m_Screensavers.back();
 				screen.m_AdapterIndex = i;
 				screen.GetMaximizedRect();
-				screen.m_hwnd = CreateWindow(
+				screen.m_hwnd = CreateWindowEx(
+					m_Screensavers.size() == 1 ? WS_EX_APPWINDOW : WS_EX_TOOLWINDOW,
 					windowClassName,
 					L"Photo Cycle",
 					FULLSCREEN_STYLE,
@@ -803,7 +775,10 @@ HRESULT ScreenSaverWindow::OnRender()
 			{
 				caption += L" " + m_CurrentSprite->imageInfo->dateTaken;
 			}
-			auto alpha = m_NextSprite->bitmap ? 1 - m_NextSprite->alpha : 1;
+			wchar_t buf[16];
+			swprintf_s(buf, 16, L" #%d", m_CurrentSprite->imageInfo->idx);
+			caption += buf;
+			auto alpha = (m_NextSprite->bitmap && m_NextSprite->alpha > 0) ? 1 - m_NextSprite->alpha : 1;
 			RenderText(caption, alpha, 20, 20, rtSize.width - 20 * 2, rtSize.height - 20);
 		}
 	}
@@ -879,6 +854,11 @@ void App::StartSwap(bool animate, int offset)
 
 void App::Update(float deltaTime)
 {
+	if (m_IsPaused)
+	{
+		return;
+	}
+
 	m_DisplayTimer -= deltaTime;
 	if (m_DisplayTimer <= 0.0f) {
 		StartSwap(true, 1);
@@ -970,6 +950,26 @@ LRESULT CALLBACK App::WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
 		}
 		break;
 
+	case WM_ACTIVATE:
+		if (app)
+		{
+			if (LOWORD(wParam) != WA_INACTIVE) // this window activated
+			{
+				for (auto& screen : app->m_Screensavers)
+				{
+					if (screen.m_hwnd != hwnd)
+					{
+						// Prevent infinite activation loop by checking if already foreground
+						if (GetForegroundWindow() != screen.m_hwnd)
+						{
+							SetForegroundWindow(screen.m_hwnd);
+						}
+					}
+				}
+			}
+		}
+		break;
+
 	case WM_SYSKEYDOWN:
 	{
 		auto isAltDown = GetKeyState(VK_MENU) & 0x8000;
@@ -1002,6 +1002,10 @@ LRESULT CALLBACK App::WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
 
 		case 'T':
 			if (app) app->settings.ToggleRenderText();
+			break;
+
+		case 'P':
+			if (app) app->TogglePause();
 			break;
 		}
 	}

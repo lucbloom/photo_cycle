@@ -13,3 +13,4 @@
 #include <filesystem>
 #include <iostream>
 
+#include "resource.h"
