@@ -263,11 +263,20 @@ HRESULT ScreenSaverWindow::CreateDeviceResources() {
 
 #define FULLSCREEN_STYLE WS_POPUP
 
+HANDLE hMutex = nullptr;
+
 HRESULT App::Initialize(HINSTANCE hInstance, const std::wstring& cmd) {
 
 	size_t pPos = cmd.find(L"/p");
 	if (pPos == std::string::npos) { pPos = cmd.find(L"/P"); }
 	m_IsPreview = (pPos != std::string::npos);
+
+	if (m_IsPreview) {
+		HANDLE hMutex = CreateMutexA(NULL, FALSE, "MyScreensaverPreviewLock");
+		if (GetLastError() == ERROR_ALREADY_EXISTS) {
+			return 0; // Another preview already running
+		}
+	}
 
 	pPos = cmd.find(L"/c");
 	if (pPos == std::string::npos) { pPos = cmd.find(L"/C"); }
@@ -900,7 +909,6 @@ void ScreenSaverWindow::StartSwap(bool animate, int offset)
 void ScreenSaverWindow::EndFade()
 {
 	m_FadeTimer = 0.0f;
-	std::swap(m_CurrentSprite, m_NextSprite);
 	m_CurrentSprite->alpha = 1;
 	m_NextSprite->Clear();
 }
@@ -914,6 +922,7 @@ void ScreenSaverWindow::Update(float deltaTime)
 		m_FadeTimer -= deltaTime;
 		m_NextSprite->alpha = EaseInOutQuad(1 - m_FadeTimer / App::instance->settings.FadeDuration);
 		if (m_FadeTimer <= 0.0f) {
+			std::swap(m_CurrentSprite, m_NextSprite);
 			EndFade();
 		}
 	}
@@ -1190,6 +1199,9 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 		}
 		CoUninitialize();
 	}
+
+	ReleaseMutex(hMutex);
+	CloseHandle(hMutex);
 
 	return 0;
 }
