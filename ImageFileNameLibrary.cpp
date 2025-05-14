@@ -585,21 +585,28 @@ std::wstring DescribeLocation(const std::wstring& filePath)
 	if (addr.contains("leisure")) {
 		location += addr["leisure"].get<std::string>();
 	}
-
-	if (addr.contains("city")) {
-		location += location.empty() ? "" : " in ";
-		location += addr["city"].get<std::string>();
+	else if (addr.contains("amenity")) {
+		location += addr["amenity"].get<std::string>();
 	}
-	else if (addr.contains("village")) {
+
+	if (addr.contains("village")) {
 		location += location.empty() ? "" : " in ";
 		location += addr["village"].get<std::string>();
 	}
+	else if (addr.contains("town")) {
+		location += location.empty() ? "" : " in ";
+		location += addr["town"].get<std::string>();
+	}
+	else if (addr.contains("city")) {
+		location += location.empty() ? "" : " in ";
+		location += addr["city"].get<std::string>();
+	}
 	else if (addr.contains("state")) {
-		location += location.empty() ? "" : " somewhere in ";
+		location += location.empty() ? "" : " in ";
 		location += addr["state"].get<std::string>();
 	}
 	else if (addr.contains("county")) {
-		location += location.empty() ? "" : " somewhere near ";
+		location += location.empty() ? "" : " in ";
 		location += addr["county"].get<std::string>();
 	}
 
