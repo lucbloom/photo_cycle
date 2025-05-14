@@ -10,8 +10,10 @@
 #define IDC_PHOTOCYCLE                  109
 #define IDC_FADE_DURATION               1001
 #define IDC_DISPLAY_DURATION            1002
-#define IDC_RENDER_TEXT                 1003
-#define IDC_FONT_NAME                   1004
+#define IDC_SHOW_DATE                 1003
+#define IDC_SHOW_FOLDER                 1004
+#define IDC_SHOW_LOCATION                 1005
+#define IDC_FONT_NAME                   1006
 #define IDC_FONT_SIZE                   1007
 #define IDC_OUTLINE_WIDTH               1008
 #define IDC_SYNC_CHANGE                 1009

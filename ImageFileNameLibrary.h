@@ -1,6 +1,7 @@
 #pragma once
 
 #include "framework.h"
+class SettingsDialog;
 
 class ImageInfo {
 public:
@@ -16,7 +17,8 @@ public:
 	ImageInfo& operator=(const ImageInfo&) = default;
 	ImageInfo(ImageInfo&&) = default;
 
-	void CacheInfo();
+	void CacheInfo(SettingsDialog& sets);
+	std::wstring GetCaption(SettingsDialog& sets);
 };
 
 class ImageFileNameLibrary {

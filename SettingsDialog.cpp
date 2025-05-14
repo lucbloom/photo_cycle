@@ -36,7 +36,6 @@ static bool ListBoxContains(HWND hList, const std::wstring& value);
 
 static const wchar_t* INI_SETTINGS = L"Settings";
 static const wchar_t* INI_IMAGES = L"Images";
-static const wchar_t* INI_RENDER_TEXT = L"RenderText";
 
 SettingsDialog::SettingsDialog()
 {
@@ -47,7 +46,9 @@ SettingsDialog::SettingsDialog()
 	SyncChange = ReadBool(INI_SETTINGS, L"SyncChange", SyncChange);
 	SingleScreen = ReadBool(INI_SETTINGS, L"SingleScreen", SingleScreen);
 	PanScanFactor = ReadFloat(INI_SETTINGS, L"PanScanFactor", PanScanFactor);
-	RenderText = ReadBool(INI_SETTINGS, INI_RENDER_TEXT, RenderText);
+	ShowDate = ReadBool(INI_SETTINGS, L"ShowDate", ShowDate);
+	ShowLocation = ReadBool(INI_SETTINGS, L"ShowLocation", ShowLocation);
+	ShowFolder = ReadBool(INI_SETTINGS, L"ShowFolder", ShowFolder);
 	TextFontName = ReadString(INI_SETTINGS, L"Font", TextFontName.c_str());
 	TextColor = ReadColor(INI_SETTINGS, L"FontColor", TextColor);
 	OutlineColor = ReadColor(INI_SETTINGS, L"OutlineColor", OutlineColor);
@@ -81,7 +82,9 @@ void SettingsDialog::Show()
 		WriteBool(INI_SETTINGS, L"SyncChange", SyncChange);
 		WriteBool(INI_SETTINGS, L"SingleScreen", SingleScreen);
 		WriteFloat(INI_SETTINGS, L"PanScanFactor", PanScanFactor);
-		WriteBool(INI_SETTINGS, INI_RENDER_TEXT, RenderText);
+		WriteBool(INI_SETTINGS, L"ShowFolder", ShowFolder);
+		WriteBool(INI_SETTINGS, L"ShowLocation", ShowLocation);
+		WriteBool(INI_SETTINGS, L"ShowDate", ShowDate);
 		WriteString(INI_SETTINGS, L"Font", TextFontName.c_str());
 		WriteColor(INI_SETTINGS, L"FontColor", TextColor);
 		WriteColor(INI_SETTINGS, L"OutlineColor", OutlineColor);
@@ -143,10 +146,22 @@ void LoadAndScaleImageToFitDialog(HWND hDlg)
 	SetWindowPos(hControl, nullptr, (rect.right - destWidth) / 2, (maxHeight - destHeight) / 2, 0, 0, SWP_NOZORDER | SWP_NOSIZE);
 }
 
-void SettingsDialog::ToggleRenderText()
+void SettingsDialog::ToggleShowDate()
 {
-	RenderText = !RenderText;
-	WriteBool(INI_SETTINGS, INI_RENDER_TEXT, RenderText);
+	ShowDate = !ShowDate;
+	WriteBool(INI_SETTINGS, L"ShowDate", ShowDate);
+}
+
+void SettingsDialog::ToggleShowLocation()
+{
+	ShowLocation = !ShowLocation;
+	WriteBool(INI_SETTINGS, L"ShowLocation", ShowLocation);
+}
+
+void SettingsDialog::ToggleShowFolder()
+{
+	ShowFolder = !ShowFolder;
+	WriteBool(INI_SETTINGS, L"ShowFolder", ShowFolder);
 }
 
 static void SetFloat(HWND hDlg, int id, float value) {
@@ -245,7 +260,9 @@ INT_PTR CALLBACK SettingsDialog::SettingsDlgProc(HWND hDlg, UINT message, WPARAM
 
 		SetFloat(hDlg, IDC_FADE_DURATION, pSettings->FadeDuration);
 		SetFloat(hDlg, IDC_DISPLAY_DURATION, pSettings->DisplayDuration);
-		CheckDlgButton(hDlg, IDC_RENDER_TEXT, pSettings->RenderText ? BST_CHECKED : BST_UNCHECKED);
+		CheckDlgButton(hDlg, IDC_SHOW_DATE, pSettings->ShowDate ? BST_CHECKED : BST_UNCHECKED);
+		CheckDlgButton(hDlg, IDC_SHOW_LOCATION, pSettings->ShowLocation ? BST_CHECKED : BST_UNCHECKED);
+		CheckDlgButton(hDlg, IDC_SHOW_FOLDER, pSettings->ShowFolder ? BST_CHECKED : BST_UNCHECKED);
 		SetDlgItemTextW(hDlg, IDC_FONT_NAME, pSettings->TextFontName.c_str());
 		//SetHex(hDlg, IDC_TEXT_COLOR, pSettings->TextColor);
 		//SetHex(hDlg, IDC_OUTLINE_COLOR, pSettings->OutlineColor);
@@ -280,7 +297,9 @@ INT_PTR CALLBACK SettingsDialog::SettingsDlgProc(HWND hDlg, UINT message, WPARAM
 		{
 			pSettings->FadeDuration = GetFloat(hDlg, IDC_FADE_DURATION);
 			pSettings->DisplayDuration = GetFloat(hDlg, IDC_DISPLAY_DURATION);
-			pSettings->RenderText = IsDlgButtonChecked(hDlg, IDC_RENDER_TEXT) == BST_CHECKED;
+			pSettings->ShowDate = IsDlgButtonChecked(hDlg, IDC_SHOW_DATE) == BST_CHECKED;
+			pSettings->ShowLocation = IsDlgButtonChecked(hDlg, IDC_SHOW_LOCATION) == BST_CHECKED;
+			pSettings->ShowFolder = IsDlgButtonChecked(hDlg, IDC_SHOW_FOLDER) == BST_CHECKED;
 			{
 				wchar_t buf[256];
 				GetDlgItemTextW(hDlg, IDC_FONT_NAME, buf, 256);

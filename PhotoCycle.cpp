@@ -455,7 +455,7 @@ void ScreenSaverWindow::LoadSprite(Sprite* sprite)
 		return;
 	}
 
-	sprite->imageInfo->CacheInfo();
+	sprite->imageInfo->CacheInfo(App::instance->settings);
 
 	auto hr = LoadBitmapFromFileWithTransparencyMixedToBlack(sprite);
 	if (SUCCEEDED(hr)) {
@@ -784,22 +784,11 @@ HRESULT ScreenSaverWindow::OnRender()
 	DrawSprite(m_CurrentSprite);
 	DrawSprite(m_NextSprite);
 
-	if (App::instance->settings.RenderText)
+	if (m_CurrentSprite && m_CurrentSprite->imageInfo)
 	{
-		if (m_CurrentSprite && m_CurrentSprite->imageInfo)
+		auto caption = m_CurrentSprite->imageInfo->GetCaption(App::instance->settings);
+		if (!caption.empty())
 		{
-			auto caption = m_CurrentSprite->imageInfo->folderName;
-			if (m_CurrentSprite->imageInfo->dateTaken.length() > 1)
-			{
-				caption += L" " + m_CurrentSprite->imageInfo->dateTaken;
-			}
-			if (!m_CurrentSprite->imageInfo->isCaching)
-			{
-				if (m_CurrentSprite->imageInfo->location.length() > 1)
-				{
-					caption += L"\n" + m_CurrentSprite->imageInfo->location;
-				}
-			}
 			//wchar_t buf[16];
 			//swprintf_s(buf, 16, L" #%d", m_CurrentSprite->imageInfo->idx);
 			//caption += buf;
@@ -1015,8 +1004,16 @@ LRESULT CALLBACK App::WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
 			if (app) app->StartSwap(false, 1);
 			break;
 
-		case 'T':
-			if (app) app->settings.ToggleRenderText();
+		case 'F':
+			if (app) app->settings.ToggleShowFolder();
+			break;
+
+		case 'D':
+			if (app) app->settings.ToggleShowDate();
+			break;
+
+		case 'L':
+			if (app) app->settings.ToggleShowLocation();
 			break;
 
 		case 'P':

@@ -7,7 +7,9 @@ class SettingsDialog {
 public:
 	float FadeDuration = 0.5f;
 	float DisplayDuration = 3.0f;
-	bool RenderText = true;
+	bool ShowDate = true;
+	bool ShowLocation = true;
+	bool ShowFolder = false;
 	std::wstring TextFontName = L"Segoe UI";
 	UINT32 TextColor = 0xffffff;
 	UINT32 OutlineColor = 0x000000;
@@ -23,7 +25,9 @@ public:
 
 	SettingsDialog();
 	void Show();
-	void ToggleRenderText();
+	void ToggleShowDate();
+	void ToggleShowLocation();
+	void ToggleShowFolder();
 
 private:
 	static INT_PTR CALLBACK SettingsDlgProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam);

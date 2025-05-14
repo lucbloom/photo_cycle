@@ -1,5 +1,6 @@
 ﻿
 #include "ImageFileNameLibrary.h"
+#include "SettingsDialog.h"
 
 #define WIN32_LEAN_AND_MEAN
 #include "nlohmann/json.hpp"
@@ -185,9 +186,9 @@ DateResult GetFileCreationDate(const std::wstring& filePath) {
 	return result;
 }
 
-void ImageInfo::CacheInfo()
+void ImageInfo::CacheInfo(SettingsDialog& sets)
 {
-	if (dateTaken.empty()) {
+	if (sets.ShowDate && dateTaken.empty()) {
 		// Extract date taken from EXIF, or use filename or file creation date
 		auto dateInfo = ExtractDateTaken(filePath);
 		if (!dateInfo.success) {
@@ -213,21 +214,41 @@ void ImageInfo::CacheInfo()
 		rotation = GetExifRotation(filePath);
 	}
 
-	isCaching = true;
-	std::thread httpThread([this]()
-		{
-			if (location.empty())
+	if (sets.ShowLocation && location.empty() && !isCaching)
+	{
+		isCaching = true;
+		std::thread httpThread([this]()
 			{
 				location = DescribeLocation(filePath);
 				if (location.empty())
 				{
 					location = L" ";
 				}
-			}
-			isCaching = false;
-		});
+				isCaching = false;
+			});
+		httpThread.detach();
+	}
+}
 
-	httpThread.detach();
+std::wstring ImageInfo::GetCaption(SettingsDialog& sets)
+{
+	std::wstring caption;
+	if (sets.ShowFolder && folderName.length() > 1)
+	{
+		if (!caption.empty()) { caption += L" "; }
+		caption += L" " + folderName;
+	}
+	if (sets.ShowDate && dateTaken.length() > 1)
+	{
+		if (!caption.empty()) { caption += L" "; }
+		caption += L" " + dateTaken;
+	}
+	if (sets.ShowLocation && !isCaching && location.length() > 1)
+	{
+		if (!caption.empty()) { caption += L"\n"; }
+		caption += L" " + location;
+	}
+	return caption;
 }
 
 void ImageFileNameLibrary::LoadImages(const std::wstring& directory, const std::vector<std::wstring>& exclude) {
