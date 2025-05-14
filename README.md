@@ -37,6 +37,7 @@ A multi-monitor screensaver that cycles your photos.
 - I could not get outlines to work easily in DirectWrite. If anyone is an expert, I'd like to hear it. Now I'm using the old-but-true hack of rendering the text 4 times with an offset. So don't make that outline width bigger than 5! :-)
 - In some cases it seems like it's still running in the background, without any windows to be seen. Might be a quirk of being a screensaver?
 - The X button only works on the main window (but you use ESC almost always anyway)
+- The font doesn't scale with the screen size, which makes it potentially very big.
 - Maybe add videos :-)
 
 
