@@ -244,7 +244,7 @@ HRESULT ScreenSaverWindow::CreateDeviceResources() {
 
 	if (!m_CurrentSprite->imageInfo)
 	{
-		m_CurrentSprite->imageInfo = App::instance->m_Library.GotoImage(0);
+		m_CurrentSprite->imageInfo = App::instance->m_Library.GotoImage(1, (int)App::instance->m_Screensavers.size());
 		LoadSprite(m_CurrentSprite);
 	}
 
@@ -365,7 +365,7 @@ HRESULT App::Initialize(HINSTANCE hInstance, const std::wstring& cmd) {
 		// Show the window
 		ShowWindow(screen.m_hwnd, SW_SHOWNORMAL);
 		UpdateWindow(screen.m_hwnd);
-		screen.StartSwap(true, 0);
+		screen.LoadSprite(screen.m_CurrentSprite);
 		screen.Update(0);
 		screen.OnRender();
 	}
@@ -846,16 +846,11 @@ void App::StartSwap(bool animate, int offset)
 		}
 	}
 	else {
-		if (offset > 0) {
-			// Going forward: advance first, then animate new screen
-			m_CurentScreenIndex = (m_CurentScreenIndex + 1) % (int)m_Screensavers.size();
-			m_Screensavers[m_CurentScreenIndex].StartSwap(animate, offset);
-		}
-		else if (offset < 0) {
-			// Going back: animate current screen, then move index backward
-			m_Screensavers[m_CurentScreenIndex].StartSwap(animate, offset);
-			m_CurentScreenIndex = (m_CurentScreenIndex - 1 + (int)m_Screensavers.size()) % (int)m_Screensavers.size();
-		}
+		if (offset > 0) { m_CurentScreenIndex += offset; }
+		auto n = (int)m_Screensavers.size();
+		m_CurentScreenIndex = (m_CurentScreenIndex + n) % n;
+		m_Screensavers[(size_t)m_CurentScreenIndex].StartSwap(animate, offset);
+		if (offset < 0) { m_CurentScreenIndex += offset; }
 	}
 
 	m_DisplayTimer = settings.DisplayDuration;
@@ -881,7 +876,7 @@ void App::Update(float deltaTime)
 void ScreenSaverWindow::StartSwap(bool animate, int offset)
 {
 	for (bool success = false; !success;) {
-		auto info = App::instance->m_Library.GotoImage(offset);
+		auto info = App::instance->m_Library.GotoImage(offset, (int)App::instance->m_Screensavers.size());
 		Sprite* sprite = m_CurrentSprite;
 		if (animate)
 		{

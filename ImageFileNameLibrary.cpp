@@ -109,10 +109,10 @@ DateResult ExtractDateTaken(const std::wstring& imagePath) {
 		auto value = Utf8ToWString(dateTimeTag->value().toString());
 		std::wsmatch m;
 		std::wregex patterns[] = {
-			std::wregex(L"((\\d{4})[:-](\\d{2})[:-](\\d{2})[ T]?(\\d{2}):(\\d{2}):(\\d{2}))"),
-			std::wregex(L"((\\d{4})[:-](\\d{2})[:-](\\d{2})[ T]?(\\d{2}):(\\d{2}))"),
-			std::wregex(L"((\\d{4})[:-](\\d{2})[:-](\\d{2}))"),
-			std::wregex(L"((\\d{4})/(\\d{2})/(\\d{2}))")
+			std::wregex(L"(\\d{4})[:-](\\d{2})[:-](\\d{2})[ T]?(\\d{2}):(\\d{2}):(\\d{2})"),
+			std::wregex(L"(\\d{4})[:-](\\d{2})[:-](\\d{2})[ T]?(\\d{2}):(\\d{2})"),
+			std::wregex(L"(\\d{4})[:-](\\d{2})[:-](\\d{2})"),
+			std::wregex(L"(\\d{4})/(\\d{2})/(\\d{2})")
 		};
 
 		for (auto& re : patterns) {
@@ -241,13 +241,24 @@ void ImageFileNameLibrary::ShuffleImages() {
 	m_CurrentImageIdx = 0;
 }
 
-ImageInfo* ImageFileNameLibrary::GotoImage(int offset) {
+ImageInfo* ImageFileNameLibrary::GotoImage(int offset, int nSkip) {
 	if (m_ImageList.empty())
 	{
 		return NULL;
 	}
-	m_CurrentImageIdx = (m_CurrentImageIdx + offset + m_ImageList.size()) % (int)m_ImageList.size();
-	return m_ImageList[(size_t)m_CurrentImageIdx];
+
+	if (m_IsGoingBackward != (offset < 0))
+	{
+		m_IsGoingBackward = !m_IsGoingBackward;
+		m_CurrentImageIdx += offset * nSkip;
+	}
+
+	if (offset > 0) { m_CurrentImageIdx += offset; }
+	auto n = (int)m_ImageList.size();
+	m_CurrentImageIdx = (m_CurrentImageIdx + n) % n;
+	auto img = m_ImageList[(size_t)m_CurrentImageIdx];
+	if (offset < 0) { m_CurrentImageIdx += offset; }
+	return img;
 }
 
 DateResult ExtractDateFromFilename(std::wstring nameOnly)
