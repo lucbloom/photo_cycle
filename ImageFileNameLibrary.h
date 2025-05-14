@@ -5,6 +5,7 @@
 class ImageInfo {
 public:
 	int idx = -1;
+	bool isCaching = false;
 	std::wstring dateTaken;
 	int rotation = -1;
 	std::wstring filePath;

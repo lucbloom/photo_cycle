@@ -13,7 +13,8 @@ A multi-monitor screensaver that cycles your photos.
 - Can be ran stand-alone for your viewing pleasure
 - Flip forward and backward with arrow keys
 - Always fill the screen, no matter the aspect ratio or zoom level
-- Optional caption: date + folder of origin (e.g. Kopenhagen 22-07-2012)
+- An optional caption: date + folder of origin (e.g. Kopenhagen 22-07-2012)
+- Location information for the photo
 - Background color (for images with transparency)
 - Synchronized cycle or one-by-one per monitor
 - Option to only use a single screen (black on the rest)
@@ -24,6 +25,7 @@ A multi-monitor screensaver that cycles your photos.
 - Minimal resources
 - Working preview in Screen Save Settings
 - Date is scanned from EXIF info, then looks for a date in the filename, then goes for file creation date
+- Location is taken from EXIF lat/lon, then cobbled from nominatim json (async)
 - Font options for the caption: font, size, outline width, font color, ouline color
 - Alt+Tab and the task bar only show one of the multiple windows
 - Alt+Enter toggles full-screen mode

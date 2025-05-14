@@ -17,8 +17,11 @@
 //#include <iostream>
 //#include <iomanip>
 //#include <sstream>
+#include <wininet.h>
 
-#pragma comment(lib, "libcurl.lib") 
+#pragma comment(lib, "wininet.lib")
+//#pragma comment(lib, "libcurl.lib") 
+//#pragma comment(lib, "wldap32.lib") 
 
 struct DateResult {
 	bool success = false;
@@ -29,7 +32,7 @@ struct DateResult {
 };
 
 DateResult ExtractDateFromFilename(std::wstring filename);
-std::wstring DescribeLocation();
+std::wstring DescribeLocation(const std::wstring& filePath);
 
 std::wstring FormatDate(std::tm tm, const std::wstring& format = L"dd-mm-yyyy") {
 	std::time_t time = std::mktime(&tm);
@@ -185,40 +188,47 @@ DateResult GetFileCreationDate(const std::wstring& filePath) {
 
 void ImageInfo::CacheInfo()
 {
-	if (dateTaken.empty()) {
-		// Extract date taken from EXIF, or use filename or file creation date
-		auto dateInfo = ExtractDateTaken(filePath);
-		if (!dateInfo.success) {
-			// If no DateTaken in EXIF, use the date from the filename or file creation date
-			std::filesystem::path fileName = std::filesystem::path(filePath).filename();
-			// You could parse the filename for date if the file follows a date-based naming convention
-			dateInfo = ExtractDateFromFilename(fileName.stem().wstring());
-			if (!dateInfo.success) {
-				dateInfo = GetFileCreationDate(filePath);
+	isCaching = true;
+	std::thread httpThread([this]()
+		{
+			if (dateTaken.empty()) {
+				// Extract date taken from EXIF, or use filename or file creation date
+				auto dateInfo = ExtractDateTaken(filePath);
+				if (!dateInfo.success) {
+					// If no DateTaken in EXIF, use the date from the filename or file creation date
+					std::filesystem::path fileName = std::filesystem::path(filePath).filename();
+					// You could parse the filename for date if the file follows a date-based naming convention
+					dateInfo = ExtractDateFromFilename(fileName.stem().wstring());
+					if (!dateInfo.success) {
+						dateInfo = GetFileCreationDate(filePath);
+					}
+				}
+				if (dateInfo.success) {
+					dateTaken = FormatDate(dateInfo.date);
+				}
+				else
+				{
+					dateTaken = L" ";
+				}
 			}
-		}
-		if (dateInfo.success) {
-			dateTaken = FormatDate(dateInfo.date);
-		}
-		else
-		{
-			dateTaken = L" ";
-		}
-	}
 
-	if (rotation < 0)
-	{
-		rotation = GetExifRotation(filePath);
-	}
+			if (rotation < 0)
+			{
+				rotation = GetExifRotation(filePath);
+			}
 
-	if (location.empty())
-	{
-		location = DescribeLocation();
-		if (location.empty())
-		{
-			location = L" ";
-		}
-	}
+			if (location.empty())
+			{
+				location = DescribeLocation(filePath);
+				if (location.empty())
+				{
+					location = L" ";
+				}
+			}
+			isCaching = false;
+		});
+
+	httpThread.detach();
 }
 
 void ImageFileNameLibrary::LoadImages(const std::wstring& directory, const std::vector<std::wstring>& exclude) {
@@ -474,13 +484,47 @@ size_t WriteCallback(void* contents, size_t size, size_t nmemb, std::string* out
 	return size * nmemb;
 }
 
-std::wstring DescribeLocation()
+std::string MakeHttpRequest(const std::wstring& url)
+{
+	HINTERNET hInternet, hConnect;
+	DWORD bytesRead;
+	char buffer[4096] = {};
+
+	// Initialize WinINet
+	hInternet = InternetOpen(L"HTTPS Example", INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0);
+	if (hInternet == NULL) {
+		std::cerr << "InternetOpen failed: " << GetLastError() << std::endl;
+		return "";
+	}
+
+	// Open an HTTPS connection to a website
+	hConnect = InternetOpenUrl(hInternet, url.c_str(), NULL, 0, INTERNET_FLAG_RELOAD, 0);
+	if (hConnect == NULL) {
+		std::cerr << "InternetOpenUrl failed: " << GetLastError() << std::endl;
+		InternetCloseHandle(hInternet);
+		return "";
+	}
+
+	// Read the data from the connection
+	while (InternetReadFile(hConnect, buffer, sizeof(buffer) - 1, &bytesRead) && bytesRead > 0) {
+		buffer[bytesRead] = '\0';  // Null-terminate the data
+		std::cout << buffer;
+	}
+
+	// Clean up
+	InternetCloseHandle(hConnect);
+	InternetCloseHandle(hInternet);
+
+	return buffer;
+}
+
+std::wstring DescribeLocation(const std::wstring& filePath)
 {
 	std::string location;
 
 	double lat, lon;
 	try {
-		std::unique_ptr<Exiv2::Image> image = Exiv2::ImageFactory::open("photo.jpg");
+		std::unique_ptr<Exiv2::Image> image = Exiv2::ImageFactory::open(WStringToUtf8(filePath));
 		if (!image) {
 			std::cerr << "Failed to open image.\n";
 			return L"";
@@ -515,22 +559,24 @@ std::wstring DescribeLocation()
 		<< "&lon=" << std::fixed << std::setprecision(7) << lon
 		<< "&accept-language=nl";
 
-	CURL* curl = curl_easy_init();
-	std::string response;
+	//CURL* curl = curl_easy_init();
+	//std::string response;
+	//
+	//if (curl) {
+	//	curl_easy_setopt(curl, CURLOPT_URL, url.str().c_str());
+	//	curl_easy_setopt(curl, CURLOPT_USERAGENT, "curl/7.88.1");
+	//	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
+	//	curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
+	//
+	//	CURLcode res = curl_easy_perform(curl);
+	//	if (res != CURLE_OK) {
+	//		std::cerr << "curl error: " << curl_easy_strerror(res) << "\n";
+	//	}
+	//
+	//	curl_easy_cleanup(curl);
+	//}
 
-	if (curl) {
-		curl_easy_setopt(curl, CURLOPT_URL, url.str().c_str());
-		curl_easy_setopt(curl, CURLOPT_USERAGENT, "curl/7.88.1");
-		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
-		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
-
-		CURLcode res = curl_easy_perform(curl);
-		if (res != CURLE_OK) {
-			std::cerr << "curl error: " << curl_easy_strerror(res) << "\n";
-		}
-
-		curl_easy_cleanup(curl);
-	}
+	auto response = MakeHttpRequest(Utf8ToWString(url.str()));
 
 
 	nlohmann::json j = nlohmann::json::parse(response);

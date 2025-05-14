@@ -789,9 +789,16 @@ HRESULT ScreenSaverWindow::OnRender()
 		if (m_CurrentSprite && m_CurrentSprite->imageInfo)
 		{
 			auto caption = m_CurrentSprite->imageInfo->folderName;
-			if (m_CurrentSprite->imageInfo->dateTaken.length() > 1)
+			if (!m_CurrentSprite->imageInfo->isCaching)
 			{
-				caption += L" " + m_CurrentSprite->imageInfo->dateTaken;
+				if (m_CurrentSprite->imageInfo->dateTaken.length() > 1)
+				{
+					caption += L" " + m_CurrentSprite->imageInfo->dateTaken;
+				}
+				if (m_CurrentSprite->imageInfo->location.length() > 1)
+				{
+					caption += L"\n" + m_CurrentSprite->imageInfo->location;
+				}
 			}
 			//wchar_t buf[16];
 			//swprintf_s(buf, 16, L" #%d", m_CurrentSprite->imageInfo->idx);
