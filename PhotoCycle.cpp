@@ -18,6 +18,8 @@
 std::string WStringToUtf8(const std::wstring& wstr);
 std::wstring Utf8ToWString(const std::string& str);
 
+#define FULLSCREEN_STYLE WS_POPUP
+
 // Custom stream buffer that redirects output to OutputDebugString
 class OutputDebugStreamBuf : public std::streambuf {
 protected:
@@ -126,6 +128,7 @@ public:
 	ComPtr<IDWriteTextFormat> m_pTextFormat = nullptr;
 
 	std::vector<ScreenSaverWindow> m_Screensavers;
+	HWND m_MainWindow = nullptr;
 	int m_CurentScreenIndex = 0;
 
 	ImageFileNameLibrary m_Library;
@@ -159,6 +162,7 @@ App* App::instance = nullptr;
 
 App::~App()
 {
+	instance = nullptr;
 	for (auto& screenSaver : m_Screensavers) {
 		screenSaver.DiscardDeviceResources();
 	}
@@ -261,8 +265,6 @@ HRESULT ScreenSaverWindow::CreateDeviceResources() {
 	return hr;
 }
 
-#define FULLSCREEN_STYLE WS_POPUP
-
 HANDLE hMutex = nullptr;
 
 HRESULT App::Initialize(HINSTANCE hInstance, const std::wstring& cmd) {
@@ -327,6 +329,7 @@ HRESULT App::Initialize(HINSTANCE hInstance, const std::wstring& cmd) {
 
 		RegisterClassEx(&wcex);
 
+		bool isMainWindow = true;
 		DISPLAY_DEVICE dd;
 		dd.cb = sizeof(dd);
 		for (int i = 0; EnumDisplayDevices(NULL, i, &dd, 0); ++i) {
@@ -342,10 +345,10 @@ HRESULT App::Initialize(HINSTANCE hInstance, const std::wstring& cmd) {
 				screen.m_AdapterIndex = i;
 				screen.GetMaximizedRect();
 				screen.m_hwnd = CreateWindowEx(
-					m_Screensavers.size() == 1 ? WS_EX_APPWINDOW : WS_EX_TOOLWINDOW,
+					isMainWindow ? WS_EX_APPWINDOW : WS_EX_TOOLWINDOW,
 					windowClassName,
 					L"Photo Cycle",
-					FULLSCREEN_STYLE,
+					FULLSCREEN_STYLE,// | (isMainWindow ? WS_SYSMENU : 0),
 					screen.m_MaximizedRect.left, screen.m_MaximizedRect.top,
 					screen.m_MaximizedRect.right, screen.m_MaximizedRect.bottom,
 					nullptr,
@@ -353,6 +356,11 @@ HRESULT App::Initialize(HINSTANCE hInstance, const std::wstring& cmd) {
 					hInstance,
 					&screen
 				);
+
+				if (isMainWindow) { 
+					m_MainWindow = screen.m_hwnd; 
+					isMainWindow = false;
+				}
 			}
 		}
 	}
@@ -368,6 +376,7 @@ HRESULT App::Initialize(HINSTANCE hInstance, const std::wstring& cmd) {
 		screen.LoadSprite(screen.m_CurrentSprite);
 		screen.Update(0);
 		screen.OnRender();
+
 	}
 
 	//if (!startFullscreen)
@@ -988,12 +997,7 @@ LRESULT CALLBACK App::WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
 	{
 		switch (wParam) {
 		case VK_ESCAPE:
-			if (app)
-			{
-				for (auto& screen : app->m_Screensavers) {
-					DestroyWindow(screen.m_hwnd);
-				}
-			}
+			PostQuitMessage(0);
 			break;
 
 		case VK_LEFT:
@@ -1011,6 +1015,10 @@ LRESULT CALLBACK App::WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
 		case 'P':
 			if (app) app->TogglePause();
 			break;
+
+		case 'C':
+			if (app) app->settings.Show();
+			break;
 		}
 	}
 	break;
@@ -1024,12 +1032,6 @@ LRESULT CALLBACK App::WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
 	//	break;
 
 	case WM_DESTROY:
-		if (app)
-		{
-			for (auto& screen : app->m_Screensavers) {
-				DestroyWindow(screen.m_hwnd);
-			}
-		}
 		PostQuitMessage(0);
 		break;
 

@@ -9,6 +9,7 @@ A multi-monitor screensaver that cycles your photos.
 - Multiple exclude paths (e.g. "C:\My Photos\Receipts" or "C:\My Photos\Spicy nudes")
 - Pause the animations with P
 - Toggle caption with T
+- Open settings with C (config)
 - Can be ran stand-alone for your viewing pleasure
 - Flip forward and backward with arrow keys
 - Always fill the screen, no matter the aspect ratio or zoom level
