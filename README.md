@@ -38,8 +38,8 @@ A multi-monitor screensaver that cycles your photos.
 - In some cases it seems like it's still running in the background, without any windows to be seen. Might be a quirk of being a screensaver?
 - The X button only works on the main window (but you use ESC almost always anyway)
 - The font doesn't scale with the screen size, which makes it potentially very big.
+- If you use an image from your iCloud-for-Windows folder, it starts to dynamically download the image. This causes a serious stall. TODO: thread the loading and only display the image when it's done.
 - Maybe add videos :-)
-
 
 ## Roadmap
 I think this is a fine little program unless someone has a great idea.
