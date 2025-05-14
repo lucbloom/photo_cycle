@@ -21,6 +21,7 @@ A multi-monitor screensaver that cycles your photos.
 - A cool logo
 
 ## Technical
+- Minimal resources
 - Working preview in Screen Save Settings
 - Date is scanned from EXIF info, then looks for a date in the filename, then goes for file creation date
 - Font options for the caption: font, size, outline width, font color, ouline color
