@@ -784,9 +784,9 @@ HRESULT ScreenSaverWindow::OnRender()
 			{
 				caption += L" " + m_CurrentSprite->imageInfo->dateTaken;
 			}
-			wchar_t buf[16];
-			swprintf_s(buf, 16, L" #%d", m_CurrentSprite->imageInfo->idx);
-			caption += buf;
+			//wchar_t buf[16];
+			//swprintf_s(buf, 16, L" #%d", m_CurrentSprite->imageInfo->idx);
+			//caption += buf;
 			auto alpha = (m_NextSprite->bitmap && m_NextSprite->alpha > 0) ? 1 - m_NextSprite->alpha : 1;
 			RenderText(caption, alpha, 20, 20, rtSize.width - 20 * 2, rtSize.height - 20);
 		}
