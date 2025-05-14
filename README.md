@@ -37,4 +37,5 @@ A multi-monitor screensaver that cycles your photos.
 
 ## Roadmap
 I think this is a fine little program unless someone has a great idea.
-Maybe add a "Heart" key and show those more often?
+Maybe add a "Heart/Like" 'L' key and show those more often?
+Maybe add a "Exclude" key 'X' per photo?
