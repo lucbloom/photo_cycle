@@ -72,9 +72,13 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <TargetExt>.scr</TargetExt>
+    <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(ShortProjectName)\$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <TargetExt>.scr</TargetExt>
+    <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(ShortProjectName)\$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <TargetExt>.scr</TargetExt>
@@ -86,14 +90,15 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>CURL_STATICLIB;WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>.\;.\exiv2\include;.\exiv2\include\exiv2;.\zlib</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.\;.\exiv2\include;.\exiv2\include\exiv2;.\zlib;.\curl\include;.\json</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(SolutionDir)curl\$(Platform)\$(Configuration)\</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -102,30 +107,32 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>CURL_STATICLIB;WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>.\;.\exiv2\include;.\exiv2\include\exiv2;.\zlib</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.\;.\exiv2\include;.\exiv2\include\exiv2;.\zlib;.\curl\include;.\json</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(SolutionDir)curl\$(Platform)\$(Configuration)\</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>CURL_STATICLIB;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>.\;.\exiv2\include;.\exiv2\include\exiv2;.\zlib</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.\;.\exiv2\include;.\exiv2\include\exiv2;.\zlib;.\curl\include;.\json</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(SolutionDir)curl\$(Platform)\$(Configuration)\</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -134,16 +141,17 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>CURL_STATICLIB;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>.\;.\exiv2\include;.\exiv2\include\exiv2;.\zlib</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.\;.\exiv2\include;.\exiv2\include\exiv2;.\zlib;.\curl\include;.\json</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(SolutionDir)curl\$(Platform)\$(Configuration)\</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -228,6 +236,52 @@
     <ClInclude Include="exiv2\src\utils.hpp" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="ImageFileNameLibrary.h" />
+    <ClInclude Include="json\nlohmann\adl_serializer.hpp" />
+    <ClInclude Include="json\nlohmann\byte_container_with_subtype.hpp" />
+    <ClInclude Include="json\nlohmann\detail\abi_macros.hpp" />
+    <ClInclude Include="json\nlohmann\detail\conversions\from_json.hpp" />
+    <ClInclude Include="json\nlohmann\detail\conversions\to_chars.hpp" />
+    <ClInclude Include="json\nlohmann\detail\conversions\to_json.hpp" />
+    <ClInclude Include="json\nlohmann\detail\exceptions.hpp" />
+    <ClInclude Include="json\nlohmann\detail\hash.hpp" />
+    <ClInclude Include="json\nlohmann\detail\input\binary_reader.hpp" />
+    <ClInclude Include="json\nlohmann\detail\input\input_adapters.hpp" />
+    <ClInclude Include="json\nlohmann\detail\input\json_sax.hpp" />
+    <ClInclude Include="json\nlohmann\detail\input\lexer.hpp" />
+    <ClInclude Include="json\nlohmann\detail\input\parser.hpp" />
+    <ClInclude Include="json\nlohmann\detail\input\position_t.hpp" />
+    <ClInclude Include="json\nlohmann\detail\iterators\internal_iterator.hpp" />
+    <ClInclude Include="json\nlohmann\detail\iterators\iteration_proxy.hpp" />
+    <ClInclude Include="json\nlohmann\detail\iterators\iterator_traits.hpp" />
+    <ClInclude Include="json\nlohmann\detail\iterators\iter_impl.hpp" />
+    <ClInclude Include="json\nlohmann\detail\iterators\json_reverse_iterator.hpp" />
+    <ClInclude Include="json\nlohmann\detail\iterators\primitive_iterator.hpp" />
+    <ClInclude Include="json\nlohmann\detail\json_custom_base_class.hpp" />
+    <ClInclude Include="json\nlohmann\detail\json_pointer.hpp" />
+    <ClInclude Include="json\nlohmann\detail\json_ref.hpp" />
+    <ClInclude Include="json\nlohmann\detail\macro_scope.hpp" />
+    <ClInclude Include="json\nlohmann\detail\macro_unscope.hpp" />
+    <ClInclude Include="json\nlohmann\detail\meta\call_std\begin.hpp" />
+    <ClInclude Include="json\nlohmann\detail\meta\call_std\end.hpp" />
+    <ClInclude Include="json\nlohmann\detail\meta\cpp_future.hpp" />
+    <ClInclude Include="json\nlohmann\detail\meta\detected.hpp" />
+    <ClInclude Include="json\nlohmann\detail\meta\identity_tag.hpp" />
+    <ClInclude Include="json\nlohmann\detail\meta\is_sax.hpp" />
+    <ClInclude Include="json\nlohmann\detail\meta\std_fs.hpp" />
+    <ClInclude Include="json\nlohmann\detail\meta\type_traits.hpp" />
+    <ClInclude Include="json\nlohmann\detail\meta\void_t.hpp" />
+    <ClInclude Include="json\nlohmann\detail\output\binary_writer.hpp" />
+    <ClInclude Include="json\nlohmann\detail\output\output_adapters.hpp" />
+    <ClInclude Include="json\nlohmann\detail\output\serializer.hpp" />
+    <ClInclude Include="json\nlohmann\detail\string_concat.hpp" />
+    <ClInclude Include="json\nlohmann\detail\string_escape.hpp" />
+    <ClInclude Include="json\nlohmann\detail\string_utils.hpp" />
+    <ClInclude Include="json\nlohmann\detail\value_t.hpp" />
+    <ClInclude Include="json\nlohmann\json.hpp" />
+    <ClInclude Include="json\nlohmann\json_fwd.hpp" />
+    <ClInclude Include="json\nlohmann\ordered_map.hpp" />
+    <ClInclude Include="json\nlohmann\thirdparty\hedley\hedley.hpp" />
+    <ClInclude Include="json\nlohmann\thirdparty\hedley\hedley_undef.hpp" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="SettingsDialog.h" />
     <ClInclude Include="zlib\crc32.h" />

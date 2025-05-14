@@ -9,6 +9,7 @@ public:
 	int rotation = -1;
 	std::wstring filePath;
 	std::wstring folderName;
+	std::wstring location;
 	ImageInfo() = default;
 	ImageInfo(const ImageInfo&) = default;
 	ImageInfo& operator=(const ImageInfo&) = default;

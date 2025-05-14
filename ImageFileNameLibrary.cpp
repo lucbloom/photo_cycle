@@ -1,11 +1,24 @@
-
+﻿
 #include "ImageFileNameLibrary.h"
 
 #define WIN32_LEAN_AND_MEAN
-#include <exiv2.hpp>
+#include "curl/include/curl/curl.h"
+#include "nlohmann/json.hpp"
 
+#include <exiv2.hpp>
 #include <cwctype>
 #include <random>
+//#include <exiv2/exiv2.hpp>
+//#include <iostream>
+//#include <iomanip>
+//#include <iostream>
+//#include <fstream>
+//#include <string>
+//#include <iostream>
+//#include <iomanip>
+//#include <sstream>
+
+#pragma comment(lib, "libcurl.lib") 
 
 struct DateResult {
 	bool success = false;
@@ -16,6 +29,7 @@ struct DateResult {
 };
 
 DateResult ExtractDateFromFilename(std::wstring filename);
+std::wstring DescribeLocation();
 
 std::wstring FormatDate(std::tm tm, const std::wstring& format = L"dd-mm-yyyy") {
 	std::time_t time = std::mktime(&tm);
@@ -195,6 +209,15 @@ void ImageInfo::CacheInfo()
 	if (rotation < 0)
 	{
 		rotation = GetExifRotation(filePath);
+	}
+
+	if (location.empty())
+	{
+		location = DescribeLocation();
+		if (location.empty())
+		{
+			location = L" ";
+		}
 	}
 }
 
@@ -422,4 +445,123 @@ DateResult ExtractDateFromFilename(std::wstring nameOnly)
 	// If no patterns matched
 	result.explanation = "No recognizable date pattern found in filename";
 	return result;
+}
+
+double convertToDecimal(const Exiv2::Exifdatum& degreesDatum, const Exiv2::Exifdatum& refDatum) {
+	const Exiv2::Value& degrees = degreesDatum.value();
+	const Exiv2::Value& ref = refDatum.value();
+
+	if (degrees.count() != 3) return 0.0;
+
+	auto toDouble = [](const Exiv2::Rational& r) {
+		return static_cast<double>(r.first) / r.second;
+		};
+
+	double d = toDouble(degrees.toRational(0));
+	double m = toDouble(degrees.toRational(1));
+	double s = toDouble(degrees.toRational(2));
+	double decimal = d + m / 60.0 + s / 3600.0;
+
+	std::string direction = ref.toString();
+	if (direction == "S" || direction == "W")
+		decimal *= -1;
+
+	return decimal;
+}
+
+size_t WriteCallback(void* contents, size_t size, size_t nmemb, std::string* out) {
+	out->append((char*)contents, size * nmemb);
+	return size * nmemb;
+}
+
+std::wstring DescribeLocation()
+{
+	std::string location;
+
+	double lat, lon;
+	try {
+		std::unique_ptr<Exiv2::Image> image = Exiv2::ImageFactory::open("photo.jpg");
+		if (!image) {
+			std::cerr << "Failed to open image.\n";
+			return L"";
+		}
+
+		image->readMetadata();
+		Exiv2::ExifData& exif = image->exifData();
+
+		lat = convertToDecimal(
+			exif["Exif.GPSInfo.GPSLatitude"],
+			exif["Exif.GPSInfo.GPSLatitudeRef"]
+		);
+		lon = convertToDecimal(
+			exif["Exif.GPSInfo.GPSLongitude"],
+			exif["Exif.GPSInfo.GPSLongitudeRef"]
+		);
+
+		std::cout << std::fixed << std::setprecision(7)
+			<< "Latitude: " << lat << "\n"
+			<< "Longitude: " << lon << "\n";
+
+	}
+	catch (const Exiv2::Error& e) {
+		std::cerr << "EXIF error: " << e.what() << "\n";
+		return L"";
+	}
+
+
+	std::ostringstream url;
+	url << "https://nominatim.openstreetmap.org/reverse?format=json"
+		<< "&lat=" << std::fixed << std::setprecision(7) << lat
+		<< "&lon=" << std::fixed << std::setprecision(7) << lon
+		<< "&accept-language=nl";
+
+	CURL* curl = curl_easy_init();
+	std::string response;
+
+	if (curl) {
+		curl_easy_setopt(curl, CURLOPT_URL, url.str().c_str());
+		curl_easy_setopt(curl, CURLOPT_USERAGENT, "curl/7.88.1");
+		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
+		curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
+
+		CURLcode res = curl_easy_perform(curl);
+		if (res != CURLE_OK) {
+			std::cerr << "curl error: " << curl_easy_strerror(res) << "\n";
+		}
+
+		curl_easy_cleanup(curl);
+	}
+
+
+	nlohmann::json j = nlohmann::json::parse(response);
+
+	const auto& addr = j["address"];
+
+	if (addr.contains("leisure")) {
+		location += addr["leisure"].get<std::string>();
+	}
+
+	if (addr.contains("city")) {
+		location += location.empty() ? "" : " in ";
+		location += addr["city"].get<std::string>();
+	}
+	else if (addr.contains("village")) {
+		location += location.empty() ? "" : " in ";
+		location += addr["village"].get<std::string>();
+	}
+	else if (addr.contains("state")) {
+		location += location.empty() ? "" : " somewhere in ";
+		location += addr["state"].get<std::string>();
+	}
+	else if (addr.contains("county")) {
+		location += location.empty() ? "" : " somewhere near ";
+		location += addr["county"].get<std::string>();
+	}
+
+	if (addr.contains("country")) {
+		location += location.empty() ? "" : ", ";
+		location += addr["country"].get<std::string>();
+	}
+
+	return Utf8ToWString(location);
 }
