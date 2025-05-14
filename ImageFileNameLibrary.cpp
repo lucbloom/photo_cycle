@@ -2,7 +2,6 @@
 #include "ImageFileNameLibrary.h"
 
 #define WIN32_LEAN_AND_MEAN
-#include "curl/include/curl/curl.h"
 #include "nlohmann/json.hpp"
 
 #include <exiv2.hpp>
@@ -188,35 +187,35 @@ DateResult GetFileCreationDate(const std::wstring& filePath) {
 
 void ImageInfo::CacheInfo()
 {
+	if (dateTaken.empty()) {
+		// Extract date taken from EXIF, or use filename or file creation date
+		auto dateInfo = ExtractDateTaken(filePath);
+		if (!dateInfo.success) {
+			// If no DateTaken in EXIF, use the date from the filename or file creation date
+			std::filesystem::path fileName = std::filesystem::path(filePath).filename();
+			// You could parse the filename for date if the file follows a date-based naming convention
+			dateInfo = ExtractDateFromFilename(fileName.stem().wstring());
+			if (!dateInfo.success) {
+				dateInfo = GetFileCreationDate(filePath);
+			}
+		}
+		if (dateInfo.success) {
+			dateTaken = FormatDate(dateInfo.date);
+		}
+		else
+		{
+			dateTaken = L" ";
+		}
+	}
+
+	if (rotation < 0)
+	{
+		rotation = GetExifRotation(filePath);
+	}
+
 	isCaching = true;
 	std::thread httpThread([this]()
 		{
-			if (dateTaken.empty()) {
-				// Extract date taken from EXIF, or use filename or file creation date
-				auto dateInfo = ExtractDateTaken(filePath);
-				if (!dateInfo.success) {
-					// If no DateTaken in EXIF, use the date from the filename or file creation date
-					std::filesystem::path fileName = std::filesystem::path(filePath).filename();
-					// You could parse the filename for date if the file follows a date-based naming convention
-					dateInfo = ExtractDateFromFilename(fileName.stem().wstring());
-					if (!dateInfo.success) {
-						dateInfo = GetFileCreationDate(filePath);
-					}
-				}
-				if (dateInfo.success) {
-					dateTaken = FormatDate(dateInfo.date);
-				}
-				else
-				{
-					dateTaken = L" ";
-				}
-			}
-
-			if (rotation < 0)
-			{
-				rotation = GetExifRotation(filePath);
-			}
-
 			if (location.empty())
 			{
 				location = DescribeLocation(filePath);
