@@ -96,55 +96,55 @@ void SettingsDialog::Show()
 	GdiplusShutdown(g_GdiplusToken);
 }
 
-void LoadAndScaleImageToFitDialog(HWND hDlg)
-{
-	std::unique_ptr<Gdiplus::Bitmap> source;
-	{
-		HRSRC hRes = FindResource(nullptr, MAKEINTRESOURCE(IDR_MY_IMAGE), RT_RCDATA);
-		DWORD dwSize = SizeofResource(nullptr, hRes);
-		HGLOBAL hResData = LoadResource(nullptr, hRes);
-		void* pData = LockResource(hResData);
-		WCHAR tempPath[MAX_PATH];
-		GetTempPathW(MAX_PATH, tempPath);
-		std::wstring tempFile = std::wstring(tempPath) + L"photo_cycle_logo__temp.jpg";
-		FILE* f = nullptr;
-		errno_t err = _wfopen_s(&f, tempFile.c_str(), L"wb");
-		fwrite(pData, 1, dwSize, f);
-		fclose(f);
-		source.reset(Gdiplus::Bitmap::FromFile(tempFile.c_str()));
-		DeleteFileW(tempFile.c_str());
-	}
-
-	RECT rect;
-	GetClientRect(hDlg, &rect);
-
-	int srcWidth = source->GetWidth();
-	int srcHeight = source->GetHeight();
-	int maxHeight = 160;
-	int destWidth = rect.right;
-	int destHeight = maxHeight;
-
-	// Maintain aspect ratio while fitting within maxHeight
-	double srcAspect = static_cast<double>(srcWidth) / srcHeight;
-	destWidth = static_cast<int>(destHeight * srcAspect);
-	if (destWidth > rect.right) {
-		destWidth = rect.right;
-		destHeight = static_cast<int>(destWidth / srcAspect);
-	}
-
-	// Create and scale the image
-	Gdiplus::Bitmap target(destWidth, destHeight, PixelFormat32bppARGB);
-	Gdiplus::Graphics g(&target);
-	g.SetInterpolationMode(Gdiplus::InterpolationModeHighQualityBicubic);
-	g.DrawImage(source.get(), 0, 0, destWidth, destHeight);
-
-	HBITMAP hBitmap = nullptr;
-	target.GetHBITMAP(Gdiplus::Color(0, 0, 0), &hBitmap);
-
-	HWND hControl = GetDlgItem(hDlg, IDC_IMAGE_PICTURE);
-	SendMessage(hControl, STM_SETIMAGE, IMAGE_BITMAP, (LPARAM)hBitmap);
-	SetWindowPos(hControl, nullptr, (rect.right - destWidth) / 2, (maxHeight - destHeight) / 2, 0, 0, SWP_NOZORDER | SWP_NOSIZE);
-}
+//void LoadAndScaleImageToFitDialog(HWND hDlg)
+//{
+//	std::unique_ptr<Gdiplus::Bitmap> source;
+//	{
+//		HRSRC hRes = FindResource(nullptr, MAKEINTRESOURCE(IDR_MY_IMAGE), RT_RCDATA);
+//		DWORD dwSize = SizeofResource(nullptr, hRes);
+//		HGLOBAL hResData = LoadResource(nullptr, hRes);
+//		void* pData = LockResource(hResData);
+//		WCHAR tempPath[MAX_PATH];
+//		GetTempPathW(MAX_PATH, tempPath);
+//		std::wstring tempFile = std::wstring(tempPath) + L"photo_cycle_logo__temp.jpg";
+//		FILE* f = nullptr;
+//		errno_t err = _wfopen_s(&f, tempFile.c_str(), L"wb");
+//		fwrite(pData, 1, dwSize, f);
+//		fclose(f);
+//		source.reset(Gdiplus::Bitmap::FromFile(tempFile.c_str()));
+//		DeleteFileW(tempFile.c_str());
+//	}
+//
+//	RECT rect;
+//	GetClientRect(hDlg, &rect);
+//
+//	int srcWidth = source->GetWidth();
+//	int srcHeight = source->GetHeight();
+//	int maxHeight = 160;
+//	int destWidth = rect.right;
+//	int destHeight = maxHeight;
+//
+//	// Maintain aspect ratio while fitting within maxHeight
+//	double srcAspect = static_cast<double>(srcWidth) / srcHeight;
+//	destWidth = static_cast<int>(destHeight * srcAspect);
+//	if (destWidth > rect.right) {
+//		destWidth = rect.right;
+//		destHeight = static_cast<int>(destWidth / srcAspect);
+//	}
+//
+//	// Create and scale the image
+//	Gdiplus::Bitmap target(destWidth, destHeight, PixelFormat32bppARGB);
+//	Gdiplus::Graphics g(&target);
+//	g.SetInterpolationMode(Gdiplus::InterpolationModeHighQualityBicubic);
+//	g.DrawImage(source.get(), 0, 0, destWidth, destHeight);
+//
+//	HBITMAP hBitmap = nullptr;
+//	target.GetHBITMAP(Gdiplus::Color(0, 0, 0), &hBitmap);
+//
+//	HWND hControl = GetDlgItem(hDlg, IDC_IMAGE_PICTURE);
+//	SendMessage(hControl, STM_SETIMAGE, IMAGE_BITMAP, (LPARAM)hBitmap);
+//	SetWindowPos(hControl, nullptr, (rect.right - destWidth) / 2, (maxHeight - destHeight) / 2, 0, 0, SWP_NOZORDER | SWP_NOSIZE);
+//}
 
 void SettingsDialog::ToggleShowDate()
 {
@@ -281,7 +281,7 @@ INT_PTR CALLBACK SettingsDialog::SettingsDlgProc(HWND hDlg, UINT message, WPARAM
 			SendDlgItemMessageW(hDlg, IDC_EXCLUDE_LIST, LB_ADDSTRING, 0, (LPARAM)path.c_str());
 		}
 
-		LoadAndScaleImageToFitDialog(hDlg);
+		//LoadAndScaleImageToFitDialog(hDlg);
 
 		//HICON hIcon = (HICON)LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_PHOTOCYCLE), IMAGE_ICON, 0, 0, LR_DEFAULTCOLOR);
 		//HICON hIconSmall = (HICON)LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_PHOTOCYCLE_SMALL), IMAGE_ICON, 0, 0, LR_DEFAULTCOLOR);
@@ -602,43 +602,42 @@ std::vector<std::wstring> ReadList(LPCWSTR section, LPCWSTR key) {
 }
 
 std::wstring EnsureIniFileExists(bool create) {
-	wchar_t path[MAX_PATH];
-
 	// Get AppData directory path
-	HRESULT hr = SHGetFolderPath(NULL, CSIDL_APPDATA, NULL, 0, path);
+	wchar_t* cpath = nullptr;
+	HRESULT hr = SHGetKnownFolderPath(FOLDERID_RoamingAppData, 0, nullptr, &cpath);
 	if (FAILED(hr)) {
 		wprintf(L"Error getting AppData path: %08lx\n", hr);
 		return L"";
 	}
-
-	// Append your app's folder to the AppData path
-	wcscat_s(path, MAX_PATH, L"\\PhotoCycle");
+	std::wstring wpath = cpath;
+	CoTaskMemFree(cpath);
+	wpath += L"\\PhotoCycle";
 
 	if (create)
 	{
 		// Ensure the directory exists
-		BOOL success = CreateDirectory(path, NULL);
+		BOOL success = CreateDirectory(wpath.c_str(), NULL);
 		if (!success) {
 			DWORD err = GetLastError();
 			if (err != ERROR_ALREADY_EXISTS) {
-				wprintf(L"Error creating directory '%s' (error code: %lu)\n", path, err);
+				wprintf(L"Error creating directory '%s' (error code: %lu)\n", wpath.c_str(), err);
 				return L"";
 			}
 		}
 	}
 
 	// Append your app's folder to the AppData path
-	wcscat_s(path, MAX_PATH, L"\\config.ini");
+	wpath += L"\\config.ini";
 
 	if (create)
 	{
-		DWORD attr = GetFileAttributes(path);
+		DWORD attr = GetFileAttributes(wpath.c_str());
 		if (attr == INVALID_FILE_ATTRIBUTES) {
-			HANDLE hFile = CreateFile(path, GENERIC_WRITE, 0, nullptr, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, nullptr);
+			HANDLE hFile = CreateFile(wpath.c_str(), GENERIC_WRITE, 0, nullptr, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, nullptr);
 			if (hFile != INVALID_HANDLE_VALUE) CloseHandle(hFile);
 		}
 	}
 
-	return path;
+	return wpath;
 }
 

@@ -140,6 +140,7 @@ public:
 	bool m_IsPreview = false;
 	bool m_IsConfigDialogMode = false;
 	bool m_IsPaused = false;
+	bool m_WantsToQuit = false;
 
 	App() { instance = this; }
 	~App();
@@ -265,7 +266,7 @@ HRESULT ScreenSaverWindow::CreateDeviceResources() {
 	return hr;
 }
 
-HANDLE hMutex = nullptr;
+//HANDLE hMutex = nullptr;
 
 HRESULT App::Initialize(HINSTANCE hInstance, const std::wstring& cmd) {
 
@@ -928,6 +929,19 @@ void ScreenSaverWindow::Update(float deltaTime)
 	}
 }
 
+static void ShowMyCursor(bool show)
+{
+	if (show)
+	{
+		while (ShowCursor(TRUE) < 0);
+	}
+	else
+	{
+		while (ShowCursor(FALSE) >= 0);
+		SetCursor(nullptr);
+	}
+}
+
 LRESULT CALLBACK App::WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	auto app = App::instance;
@@ -977,6 +991,16 @@ LRESULT CALLBACK App::WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
 				}
 			}
 		}
+
+		ShowMyCursor(LOWORD(wParam) != WA_INACTIVE);
+	break;
+
+	case WM_SETFOCUS:
+		ShowMyCursor(false);
+		break;
+
+	case WM_KILLFOCUS:
+		ShowMyCursor(true);
 		break;
 
 	case WM_SYSKEYDOWN:
@@ -993,6 +1017,15 @@ LRESULT CALLBACK App::WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
 	{
 		switch (wParam) {
 		case VK_ESCAPE:
+			if (app)
+			{
+				app->m_WantsToQuit = true;
+				for (auto& screen : app->m_Screensavers) {
+					if (screen.m_hwnd) {
+						DestroyWindow(screen.m_hwnd);
+					}
+				}
+			}
 			PostQuitMessage(0);
 			break;
 
@@ -1036,6 +1069,7 @@ LRESULT CALLBACK App::WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
 	//	break;
 
 	case WM_DESTROY:
+		if (app) { app->m_WantsToQuit = true; }
 		PostQuitMessage(0);
 		break;
 
@@ -1138,7 +1172,8 @@ HRESULT App::LoadBitmapFromFile(
 	return hr;
 }
 
-void App::RunMessageLoop() {
+void App::RunMessageLoop()
+{
 	const auto targetFrameTime = std::chrono::milliseconds(1000 / 60);
 
 	auto frameStart = std::chrono::steady_clock::now();
@@ -1146,7 +1181,7 @@ void App::RunMessageLoop() {
 	bool isRunning = true;
 
 	MSG msg;
-	while (isRunning) {
+	while (isRunning && !m_WantsToQuit) {
 		previousFrameStart = frameStart;
 		// Record the start time of this frame
 		frameStart = std::chrono::steady_clock::now();
@@ -1184,13 +1219,15 @@ void App::RunMessageLoop() {
 	}
 }
 
-int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCmdShow) {
+int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR lpCmdLine, _In_ int nCmdShow)
+{
 	HeapSetInformation(nullptr, HeapEnableTerminationOnCorruption, nullptr, 0);
 
 	HRESULT hr = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
 
 	if (SUCCEEDED(hr))
 	{
+		try
 		{
 			App app;
 
@@ -1198,11 +1235,14 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 				app.RunMessageLoop();
 			}
 		}
+		catch (...)
+		{
+		}
 		CoUninitialize();
 	}
 
-	ReleaseMutex(hMutex);
-	CloseHandle(hMutex);
+	//ReleaseMutex(hMutex);
+	//CloseHandle(hMutex);
 
 	return 0;
 }

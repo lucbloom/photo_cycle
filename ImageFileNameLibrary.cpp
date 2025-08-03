@@ -443,21 +443,25 @@ DateResult ExtractDateFromFilename(std::wstring nameOnly)
 	}
 
 	// UNIX timestamp in filename
-	std::wregex unixTimestampRegex(L"(?:^|[^\\d])(\\d{10})(?:[^\\d]|$)");
+	std::wregex unixTimestampRegex(L"(?:^|[^\\d])(\\d{10,13})(?:[^\\d]|$)");
 	std::wsmatch timestampMatches;
 	if (std::regex_search(nameOnly, timestampMatches, unixTimestampRegex)) {
-		long timestamp = std::stol(timestampMatches[1]);
-		// Validate timestamp (between 2000 and 2030)
-		if (timestamp > 946684800 && timestamp < 1893456000) {
+		try {
 			long timestamp = std::stol(timestampMatches[1]);
-			std::time_t time = static_cast<std::time_t>(timestamp);
-			result.date = *std::gmtime(&time); // Make a copy if you don't want a pointer
-			result.success = true;
-			result.confidence = 0.6;
-			result.pattern = "UNIX Timestamp";
-			result.explanation = "Matched UNIX Timestamp pattern";
-			return result;
+			// Validate timestamp (between 1990 and 2050)
+			if (timestamp > 631152000 && timestamp < 2524608000) {
+				long timestamp = std::stol(timestampMatches[1]);
+				std::time_t time = static_cast<std::time_t>(timestamp);
+				result.date = *std::gmtime(&time); // Make a copy if you don't want a pointer
+				result.success = true;
+				result.confidence = 0.6;
+				result.pattern = "UNIX Timestamp";
+				result.explanation = "Matched UNIX Timestamp pattern";
+				return result;
+			}
 		}
+		catch (const std::out_of_range&) {} // timestamp was te groot
+		catch (const std::invalid_argument&) {} // geen geldig getal
 	}
 
 	// Canon camera format: IMG_NNNN
