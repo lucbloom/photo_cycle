@@ -402,3 +402,4 @@ FodyWeavers.xsd
 /enc_temp_folder/*
 /test.jpg
 /build/PhotoCycle.zip
+/votes.txt

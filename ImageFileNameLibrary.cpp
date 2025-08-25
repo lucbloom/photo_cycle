@@ -642,3 +642,55 @@ std::wstring DescribeLocation(const std::wstring& filePath)
 
 	return Utf8ToWString(location);
 }
+
+bool ImageInfo::RotateImage90()
+{
+	try {
+		auto img = Exiv2::ImageFactory::open(WStringToUtf8(filePath));
+		if (!img) return false;
+
+		img->readMetadata();
+		auto& exifData = img->exifData();
+
+		int newOrientation = 1; // default "normal"
+		auto it = exifData.findKey(Exiv2::ExifKey("Exif.Image.Orientation"));
+		if (it != exifData.end()) {
+			int orientation = it->toUint32();
+			// Map orientation → angle
+			int currentDeg = 0;
+			switch (orientation) {
+			case 3: currentDeg = 180; break;
+			case 6: currentDeg = 90; break;
+			case 8: currentDeg = 270; break;
+			}
+			// Add 90°
+			int newDeg = (currentDeg + 90) % 360;
+			switch (newDeg) {
+			case 0: newOrientation = 1; break;
+			case 90: newOrientation = 6; break;
+			case 180: newOrientation = 3; break;
+			case 270: newOrientation = 8; break;
+			}
+		}
+		else {
+			// If no orientation tag, start at 90°
+			newOrientation = 6;
+		}
+
+		exifData["Exif.Image.Orientation"] = newOrientation;
+		img->setExifData(exifData);
+		img->writeMetadata();
+
+		switch (newOrientation) {
+		case 1: rotation = 0; break;
+		case 6: rotation = 90; break;
+		case 3: rotation = 180; break;
+		case 8: rotation = 270; break;
+		}
+		return true;
+	}
+	catch (const Exiv2::Error& e) {
+		std::wcerr << L"Rotate EXIF error: " << e.what() << std::endl;
+		return false;
+	}
+}

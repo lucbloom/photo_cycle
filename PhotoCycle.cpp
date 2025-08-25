@@ -1,4 +1,4 @@
-#ifndef UNICODE
+﻿#ifndef UNICODE
 #define UNICODE
 #endif
 
@@ -7,6 +7,9 @@
 #include <dwrite.h>
 #include <wincodec.h>
 #include <wrl/client.h>
+#include <fstream>
+#include <unordered_set>
+#include <chrono>
 
 #include "ImageFileNameLibrary.h"
 #include "SettingsDialog.h"
@@ -17,6 +20,17 @@
 
 std::string WStringToUtf8(const std::wstring& wstr);
 std::wstring Utf8ToWString(const std::string& str);
+
+#ifndef GET_X_LPARAM
+#define GET_X_LPARAM(lp) ((int)(short)LOWORD(lp))
+#endif
+#ifndef GET_Y_LPARAM
+#define GET_Y_LPARAM(lp) ((int)(short)HIWORD(lp))
+#endif
+
+#define HEART L"❤️"
+#define THUMB_DOWN L"👎"
+#define VOTE_BUTTONS_DISPLAY_TIME 1
 
 #define FULLSCREEN_STYLE WS_POPUP
 
@@ -89,6 +103,7 @@ public:
 	int m_AdapterIndex = 0;
 	HWND m_hwnd = nullptr;
 	RECT m_MaximizedRect = { CW_USEDEFAULT, CW_USEDEFAULT, 640, 480 };
+	RECT m_LoveButtonRect = {}, m_DownVoteButtonRect = {}, m_RotateButtonRect = {};
 	ComPtr<ID2D1HwndRenderTarget> m_pRenderTarget = nullptr;
 	Sprite* m_CurrentSprite = new Sprite();
 	Sprite* m_NextSprite = new Sprite();
@@ -133,7 +148,14 @@ public:
 
 	ImageFileNameLibrary m_Library;
 
+	std::unordered_set<std::wstring> m_Downvoted;
+	const std::wstring m_VoteFile = L"votes.txt";
+
+	POINT m_LastMouse = {};
+	std::chrono::steady_clock::time_point m_LastMouseMove = std::chrono::steady_clock::now();
+	bool m_ShowButtons = false;
 	float m_DisplayTimer = 0;
+	HHOOK m_MouseHook = nullptr;
 
 	SettingsDialog settings;
 
@@ -150,8 +172,10 @@ public:
 	void OnRender();
 	void SetFullscreen(bool fullscreen);
 	static LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
+	static LRESULT CALLBACK LowLevelMouseProc(int nCode, WPARAM wParam, LPARAM lParam);
 	void StartSwap(bool animate, int offset);
 	void TogglePause() { m_IsPaused = !m_IsPaused; }
+	void SaveVote(const std::wstring& kind, const std::wstring& path);
 
 	// Load a bitmap from a file
 	HRESULT LoadBitmapFromFile(ID2D1RenderTarget* m_pRenderTarget, IWICImagingFactory* pIWICFactory, PCWSTR uri, UINT destinationWidth, UINT destinationHeight, ID2D1Bitmap** ppBitmap);
@@ -166,6 +190,11 @@ App::~App()
 	instance = nullptr;
 	for (auto& screenSaver : m_Screensavers) {
 		screenSaver.DiscardDeviceResources();
+	}
+
+	if (m_MouseHook) {
+		UnhookWindowsHookEx(m_MouseHook);
+		m_MouseHook = nullptr;
 	}
 }
 
@@ -298,6 +327,14 @@ HRESULT App::Initialize(HINSTANCE hInstance, const std::wstring& cmd) {
 
 	m_Library.SetPaths(settings.IncludePaths, settings.ExcludePaths);
 
+	std::wifstream fin(m_VoteFile);
+	std::wstring line;
+	while (std::getline(fin, line)) {
+		if (line.rfind(THUMB_DOWN L" ", 0) == 0) {
+			m_Downvoted.insert(line.substr(5));
+		}
+	}
+
 	HRESULT hr = CreateDeviceIndependentResources();
 	if (FAILED(hr)) {
 		return hr;
@@ -308,6 +345,10 @@ HRESULT App::Initialize(HINSTANCE hInstance, const std::wstring& cmd) {
 		m_Screensavers.resize(1);
 		m_Screensavers[0].m_hwnd = reinterpret_cast<HWND>(_wtoi64(hwndStr));
 		m_Screensavers[0].GetMaximizedRect();
+		if (!m_Screensavers[0].m_hwnd) {
+			::OutputDebugStringW(L"Failed to create HWND");
+			return E_FAIL;
+		}
 	}
 	else
 	{
@@ -330,15 +371,15 @@ HRESULT App::Initialize(HINSTANCE hInstance, const std::wstring& cmd) {
 
 		RegisterClassEx(&wcex);
 
-		bool isMainWindow = true;
-		DISPLAY_DEVICE dd;
+		m_MainWindow = nullptr;
+		DISPLAY_DEVICE dd = {};
 		dd.cb = sizeof(dd);
 		for (int i = 0; EnumDisplayDevices(NULL, i, &dd, 0); ++i) {
 			if (settings.SingleScreen && !(dd.StateFlags & DISPLAY_DEVICE_PRIMARY_DEVICE)) {
 				continue;
 			}
 
-			DEVMODE dm;
+			DEVMODE dm = {};
 			dm.dmSize = sizeof(dm);
 			if (EnumDisplaySettings(dd.DeviceName, ENUM_CURRENT_SETTINGS, &dm)) {
 				m_Screensavers.resize(m_Screensavers.size() + 1);
@@ -346,32 +387,49 @@ HRESULT App::Initialize(HINSTANCE hInstance, const std::wstring& cmd) {
 				screen.m_AdapterIndex = i;
 				screen.GetMaximizedRect();
 				screen.m_hwnd = CreateWindowEx(
-					isMainWindow ? WS_EX_APPWINDOW : WS_EX_TOOLWINDOW,
-					windowClassName,
+					m_MainWindow ? WS_EX_TOOLWINDOW : WS_EX_APPWINDOW,
+					wcex.lpszClassName,
 					L"Photo Cycle",
 					FULLSCREEN_STYLE,// | (isMainWindow ? WS_SYSMENU : 0),
 					screen.m_MaximizedRect.left, screen.m_MaximizedRect.top,
 					screen.m_MaximizedRect.right, screen.m_MaximizedRect.bottom,
-					nullptr,
+					m_MainWindow,
 					nullptr,
 					hInstance,
 					&screen
 				);
 
-				if (isMainWindow) { 
+				if (!screen.m_hwnd) {
+					DWORD err = GetLastError();
+					wchar_t buf[512];
+					FormatMessageW(
+						FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+						nullptr,
+						err,
+						MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+						buf,
+						512,
+						nullptr
+					);
+
+					wchar_t msg[600];
+					swprintf_s(msg, L"Failed to create HWND for device #%d (err=%lu): %s", i, err, buf);
+					::OutputDebugStringW(msg);
+
+					return E_FAIL;
+				}
+
+				SetWindowLong(screen.m_hwnd, GWL_EXSTYLE,
+					GetWindowLong(screen.m_hwnd, GWL_EXSTYLE) & ~WS_EX_NOACTIVATE);
+
+				if (!m_MainWindow) {
 					m_MainWindow = screen.m_hwnd; 
-					isMainWindow = false;
 				}
 			}
 		}
 	}
 
 	for (auto& screen : m_Screensavers) {
-		if (!screen.m_hwnd) {
-			return E_FAIL;
-		}
-
-		// Show the window
 		ShowWindow(screen.m_hwnd, SW_SHOWNORMAL);
 		UpdateWindow(screen.m_hwnd);
 		screen.LoadSprite(screen.m_CurrentSprite);
@@ -385,7 +443,14 @@ HRESULT App::Initialize(HINSTANCE hInstance, const std::wstring& cmd) {
 	//	SetFullscreen(false);
 	//}
 
+	m_MouseHook = SetWindowsHookExW(WH_MOUSE_LL, LowLevelMouseProc, GetModuleHandleW(nullptr), 0);
+
 	return S_OK;
+}
+
+void App::SaveVote(const std::wstring& kind, const std::wstring& path) {
+	std::wofstream fout(m_VoteFile, std::ios::app);
+	fout << kind << L" " << path << L"\n";
 }
 
 RECT ScreenSaverWindow::GetMaximizedRect()
@@ -798,6 +863,37 @@ HRESULT ScreenSaverWindow::OnRender()
 		}
 	}
 
+	if (m_FadeTimer <= 0 && App::instance->m_ShowButtons && m_CurrentSprite && m_CurrentSprite->imageInfo) {
+		float size = 60.0f;
+		float margin = 20.0f;
+		float spacing = 20.0f;
+		auto n = 3;
+		auto x = rtSize.width - size - margin - (spacing + size) * (n - 1);
+		auto y = rtSize.height - margin - size;
+
+		// Rotate button
+		D2D1_RECT_F rotRect = D2D1::RectF(x, y, x + size, y + size);
+		m_pRenderTarget->FillRectangle(rotRect, m_pTextFillBrush.Get());
+		RenderText(L"↻", 1, rotRect.left, rotRect.top - 15, size, size);
+		x += spacing + size;
+
+		// Love button
+		D2D1_RECT_F loveRect = D2D1::RectF(x, y, x + size, y + size);
+		m_pRenderTarget->FillRectangle(loveRect, m_pTextFillBrush.Get());
+		RenderText(L"❤️", 1, loveRect.left, loveRect.top - 10, size, size);
+		x += spacing + size;
+
+		// Downvote button
+		D2D1_RECT_F downRect = D2D1::RectF(x, y, x + size, y + size);
+		m_pRenderTarget->FillRectangle(downRect, m_pTextFillBrush.Get());
+		RenderText(L"👎", 1, downRect.left, downRect.top - 15, size, size);
+		x += spacing + size;
+
+		m_LoveButtonRect = { (LONG)loveRect.left,(LONG)loveRect.top,(LONG)loveRect.right,(LONG)loveRect.bottom };
+		m_DownVoteButtonRect = { (LONG)downRect.left,(LONG)downRect.top,(LONG)downRect.right,(LONG)downRect.bottom };
+		m_RotateButtonRect = { (LONG)rotRect.left,(LONG)rotRect.top,(LONG)rotRect.right,(LONG)rotRect.bottom };
+	}
+
 	hr = m_pRenderTarget->EndDraw();
 
 	if (hr == D2DERR_RECREATE_TARGET) {
@@ -864,6 +960,10 @@ void App::StartSwap(bool animate, int offset)
 
 void App::Update(float deltaTime)
 {
+	if (std::chrono::steady_clock::now() - m_LastMouseMove > std::chrono::seconds(VOTE_BUTTONS_DISPLAY_TIME)) {
+		m_ShowButtons = false;
+	}
+
 	if (m_IsPaused)
 	{
 		return;
@@ -881,8 +981,14 @@ void App::Update(float deltaTime)
 
 void ScreenSaverWindow::StartSwap(bool animate, int offset)
 {
-	for (bool success = false; !success;) {
+	for (int tries = 0; tries < 100; ++tries) {
 		auto info = App::instance->m_Library.GotoImage(offset, (int)App::instance->m_Screensavers.size());
+		if (!info) return;
+
+		if (App::instance->m_Downvoted.contains(info->filePath)) {
+			continue;
+		}
+
 		Sprite* sprite = m_CurrentSprite;
 		if (animate)
 		{
@@ -897,7 +1003,10 @@ void ScreenSaverWindow::StartSwap(bool animate, int offset)
 
 		sprite->imageInfo = info;
 		LoadSprite(sprite);
-		success = sprite->bitmap;
+		if (sprite->bitmap)
+		{
+			break;
+		}
 
 		if (!m_pRenderTarget)
 		{
@@ -947,11 +1056,17 @@ LRESULT CALLBACK App::WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
 	auto app = App::instance;
 	if (message == WM_CREATE) {
 		LPCREATESTRUCT pcs = (LPCREATESTRUCT)lParam;
-		ScreenSaverWindow* screen = reinterpret_cast<ScreenSaverWindow*>(pcs->lpCreateParams);
-		SetWindowLongPtr(hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(screen));
-		screen->m_hwnd = hwnd;
-		screen->Update(0);
-		screen->OnRender();
+		//ScreenSaverWindow* screen = reinterpret_cast<ScreenSaverWindow*>(pcs->lpCreateParams);
+		//SetWindowLongPtr(hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(screen));
+		//screen->m_hwnd = hwnd;
+		for (auto& screen : app->m_Screensavers)
+		{
+			if (screen.m_hwnd == hwnd)
+			{
+				screen.Update(0);
+				screen.OnRender();
+			}
+		}
 		return 1;
 	}
 
@@ -1060,6 +1175,35 @@ LRESULT CALLBACK App::WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
 	}
 	break;
 
+	//case WM_LBUTTONDOWN:
+	//	if (app) {
+	//		auto screen = reinterpret_cast<ScreenSaverWindow*>(GetWindowLongPtr(hwnd, GWLP_USERDATA));
+	//		if (screen && screen->m_CurrentSprite && screen->m_CurrentSprite->imageInfo) {
+	//			POINT pt{ GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
+	//			const auto& path = screen->m_CurrentSprite->imageInfo->filePath;
+	//			if (PtInRect(&screen->m_LoveButtonRect, pt)) {
+	//				app->SaveVote(HEART, path);
+	//			}
+	//			else if (PtInRect(&screen->m_DownVoteButtonRect, pt)) {
+	//				app->SaveVote(THUMB_DOWN, path);
+	//				app->m_Downvoted.insert(path);
+	//				app->StartSwap(false, 1); // skip immediately
+	//			}
+	//		}
+	//	}
+	//break;
+
+	case WM_MOUSEMOVE:
+		if (app) {
+			POINT pt{ GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
+			if (pt.x != app->m_LastMouse.x || pt.y != app->m_LastMouse.y) {
+				app->m_LastMouse = pt;
+				app->m_LastMouseMove = std::chrono::steady_clock::now();
+				app->m_ShowButtons = true;
+			}
+		}
+	break;
+
 	//case WM_DISPLAYCHANGE:
 	//	InvalidateRect(hwnd, nullptr, FALSE);
 	//	break;
@@ -1079,6 +1223,53 @@ LRESULT CALLBACK App::WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPa
 
 	return DefWindowProc(hwnd, message, wParam, lParam);
 }
+
+LRESULT CALLBACK App::LowLevelMouseProc(int nCode, WPARAM wParam, LPARAM lParam)
+{
+	if (nCode == HC_ACTION) {
+		const MSLLHOOKSTRUCT* ms = reinterpret_cast<const MSLLHOOKSTRUCT*>(lParam);
+
+		// Global idle tracking for 5s auto-hide
+		if (wParam == WM_MOUSEMOVE) {
+			App::instance->m_LastMouseMove = std::chrono::steady_clock::now();
+			App::instance->m_ShowButtons = true;
+		}
+
+		if (wParam == WM_LBUTTONDOWN) {
+			POINT pt = ms->pt; // screen coords
+			HWND hwnd = WindowFromPoint(pt);
+			for (auto& screen : App::instance->m_Screensavers)
+			{
+				if (screen.m_hwnd == hwnd && screen.m_CurrentSprite && screen.m_CurrentSprite->imageInfo)
+				{
+					// Convert to client coords of that window
+					POINT cpt = pt;
+					ScreenToClient(hwnd, &cpt);
+
+					// Hit-test buttons
+					if (PtInRect(&screen.m_LoveButtonRect, cpt)) {
+						App::instance->SaveVote(L"LOVE", screen.m_CurrentSprite->imageInfo->filePath);
+						return 1; // consume click
+					}
+					else if (PtInRect(&screen.m_DownVoteButtonRect, cpt)) {
+						const auto& path = screen.m_CurrentSprite->imageInfo->filePath;
+						App::instance->SaveVote(L"DOWN", path);
+						App::instance->m_Downvoted.insert(path);
+						screen.StartSwap(false, 0); // TODO: force reload to a new image
+						return 1; // consume click
+					}
+					else if (PtInRect(&screen.m_RotateButtonRect, cpt)) {
+						screen.m_CurrentSprite->imageInfo->RotateImage90();
+						screen.StartSwap(false, 0); // TODO: force reload rotated
+						return 1; // consume click
+					}
+				}
+			}
+		}
+	}
+	return CallNextHookEx(App::instance->m_MouseHook, nCode, wParam, lParam);
+}
+
 
 // Load a bitmap from a file
 HRESULT App::LoadBitmapFromFile(

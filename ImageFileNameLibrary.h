@@ -19,6 +19,7 @@ public:
 
 	void CacheInfo(SettingsDialog& sets);
 	std::wstring GetCaption(SettingsDialog& sets);
+	bool RotateImage90();
 };
 
 class ImageFileNameLibrary {
