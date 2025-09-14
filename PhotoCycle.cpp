@@ -30,7 +30,9 @@ std::wstring Utf8ToWString(const std::string& str);
 
 #define HEART L"❤️"
 #define THUMB_DOWN L"👎"
-#define VOTE_BUTTONS_DISPLAY_TIME 1
+#define DOWN_VOTE L"DOWN"
+#define LOVE_VOTE L"LOVE"
+#define VOTE_BUTTONS_DISPLAY_TIME 3
 
 #define FULLSCREEN_STYLE WS_POPUP
 
@@ -330,7 +332,8 @@ HRESULT App::Initialize(HINSTANCE hInstance, const std::wstring& cmd) {
 	std::wifstream fin(m_VoteFile);
 	std::wstring line;
 	while (std::getline(fin, line)) {
-		if (line.rfind(THUMB_DOWN L" ", 0) == 0) {
+		if (line.rfind(THUMB_DOWN L" ", 0) == 0 ||
+			line.rfind(DOWN_VOTE L" ", 0) == 0) {
 			m_Downvoted.insert(line.substr(5));
 		}
 	}
@@ -387,7 +390,7 @@ HRESULT App::Initialize(HINSTANCE hInstance, const std::wstring& cmd) {
 				screen.m_AdapterIndex = i;
 				screen.GetMaximizedRect();
 				screen.m_hwnd = CreateWindowEx(
-					m_MainWindow ? WS_EX_TOOLWINDOW : WS_EX_APPWINDOW,
+					WS_EX_TOOLWINDOW | WS_EX_TOPMOST | (m_MainWindow ? 0 : WS_EX_APPWINDOW),
 					wcex.lpszClassName,
 					L"Photo Cycle",
 					FULLSCREEN_STYLE,// | (isMainWindow ? WS_SYSMENU : 0),
@@ -1248,12 +1251,15 @@ LRESULT CALLBACK App::LowLevelMouseProc(int nCode, WPARAM wParam, LPARAM lParam)
 
 					// Hit-test buttons
 					if (PtInRect(&screen.m_LoveButtonRect, cpt)) {
-						App::instance->SaveVote(L"LOVE", screen.m_CurrentSprite->imageInfo->filePath);
+						App::instance->SaveVote(LOVE_VOTE, screen.m_CurrentSprite->imageInfo->filePath);
+						//wchar_t buf[2048] = {};
+						//wsprintf(buf, L"LOVE!! %s (%d)\n", screen.m_CurrentSprite->imageInfo->filePath.c_str(), screen.m_AdapterIndex);
+						//OutputDebugStringW(buf);
 						return 1; // consume click
 					}
 					else if (PtInRect(&screen.m_DownVoteButtonRect, cpt)) {
 						const auto& path = screen.m_CurrentSprite->imageInfo->filePath;
-						App::instance->SaveVote(L"DOWN", path);
+						App::instance->SaveVote(DOWN_VOTE, path);
 						App::instance->m_Downvoted.insert(path);
 						screen.StartSwap(false, 0); // TODO: force reload to a new image
 						return 1; // consume click
