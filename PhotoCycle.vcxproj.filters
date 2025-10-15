@@ -413,6 +413,8 @@
     <ClInclude Include="json\nlohmann\thirdparty\hedley\hedley_undef.hpp">
       <Filter>json</Filter>
     </ClInclude>
+    <ClInclude Include="ScreenSaverWindow.h" />
+    <ClInclude Include="App.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="PhotoCycle.ico" />
@@ -420,7 +422,6 @@
     <Image Include="logo.jpg" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="PhotoCycle.cpp" />
     <ClCompile Include="ImageFileNameLibrary.cpp" />
     <ClCompile Include="exiv2\src\asfvideo.cpp">
       <Filter>exiv2\src</Filter>
@@ -669,6 +670,8 @@
       <Filter>zlib</Filter>
     </ClCompile>
     <ClCompile Include="SettingsDialog.cpp" />
+    <ClCompile Include="ScreenSaverWindow.cpp" />
+    <ClCompile Include="App.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="PhotoCycle.rc" />

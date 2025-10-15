@@ -53,7 +53,6 @@ void ImageFileNameLibrary::SetPaths(const std::vector<std::wstring>& include, co
 		LoadImages(dir, exclude);
 	}
 	ShuffleImages();
-	m_CurrentImageIdx = 0;
 }
 
 static std::wstring NormalizePath(const std::filesystem::path& path) {
@@ -101,7 +100,8 @@ int GetExifRotation(const std::wstring& imagePath) {
 		default: return 0;
 		}
 	}
-	catch (...) {
+	catch (const Exiv2::Error& e) {
+		std::wcerr << L"Error reading EXIF rotation for \"" << imagePath << "\": " << e.what() << std::endl;
 		return 0;
 	}
 }
@@ -146,7 +146,7 @@ DateResult ExtractDateTaken(const std::wstring& imagePath) {
 		}
 	}
 	catch (const Exiv2::Error& e) {
-		std::wcerr << L"Error reading EXIF data: " << e.what() << std::endl;
+		std::wcerr << L"Error reading EXIF data for \"" << imagePath << "\": " << e.what() << std::endl;
 	}
 	return result;
 }
@@ -181,7 +181,7 @@ DateResult GetFileCreationDate(const std::wstring& filePath) {
 
 	}
 	catch (const std::exception& e) {
-		std::wcerr << L"Error getting file creation date: " << e.what() << std::endl;
+		std::wcerr << L"Error getting file creation date for \"" << filePath << "\": " << e.what() << std::endl;
 	}
 	return result;
 }
@@ -291,26 +291,18 @@ void ImageFileNameLibrary::ShuffleImages() {
 	{
 		m_ImageList[i]->idx = i;
 	}
-	m_CurrentImageIdx = 0;
 }
 
-ImageInfo* ImageFileNameLibrary::GotoImage(int offset, int nSkip) {
+ImageInfo* ImageFileNameLibrary::GotoImage(int imageIndex, int monitorIndex, int numMonitors) {
 	if (m_ImageList.empty())
 	{
 		return NULL;
 	}
 
-	if (m_IsGoingBackward != (offset < 0))
-	{
-		m_IsGoingBackward = !m_IsGoingBackward;
-		m_CurrentImageIdx += offset * nSkip;
-	}
-
-	if (offset > 0) { m_CurrentImageIdx += offset; }
 	auto n = (int)m_ImageList.size();
-	m_CurrentImageIdx = (m_CurrentImageIdx + n) % n;
-	auto img = m_ImageList[(size_t)m_CurrentImageIdx];
-	if (offset < 0) { m_CurrentImageIdx += offset; }
+	auto offset = (monitorIndex * n) / numMonitors;
+	imageIndex = (offset + imageIndex + n) % n;
+	auto img = m_ImageList[(size_t)imageIndex];
 	return img;
 }
 

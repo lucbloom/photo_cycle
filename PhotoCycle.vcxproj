@@ -159,6 +159,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="App.h" />
     <ClInclude Include="exiv2\include\exiv2lib_export.h" />
     <ClInclude Include="exiv2\include\exiv2\asfvideo.hpp" />
     <ClInclude Include="exiv2\include\exiv2\basicio.hpp" />
@@ -287,6 +288,7 @@
     <ClInclude Include="json\nlohmann\thirdparty\hedley\hedley.hpp" />
     <ClInclude Include="json\nlohmann\thirdparty\hedley\hedley_undef.hpp" />
     <ClInclude Include="resource.h" />
+    <ClInclude Include="ScreenSaverWindow.h" />
     <ClInclude Include="SettingsDialog.h" />
     <ClInclude Include="zlib\crc32.h" />
     <ClInclude Include="zlib\deflate.h" />
@@ -301,6 +303,7 @@
     <ClInclude Include="zlib\zutil.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="App.cpp" />
     <ClCompile Include="exiv2\src\asfvideo.cpp" />
     <ClCompile Include="exiv2\src\basicio.cpp" />
     <ClCompile Include="exiv2\src\bmffimage.cpp" />
@@ -369,7 +372,7 @@
     <ClCompile Include="exiv2\src\xmp.cpp" />
     <ClCompile Include="exiv2\src\xmpsidecar.cpp" />
     <ClCompile Include="ImageFileNameLibrary.cpp" />
-    <ClCompile Include="PhotoCycle.cpp" />
+    <ClCompile Include="ScreenSaverWindow.cpp" />
     <ClCompile Include="SettingsDialog.cpp" />
     <ClCompile Include="zlib\adler32.c" />
     <ClCompile Include="zlib\compress.c" />
